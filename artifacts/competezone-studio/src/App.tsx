@@ -8,6 +8,7 @@ import { Shell } from '@/components/shell';
 import Studio from '@/pages/studio';
 import Biblioteca from '@/pages/biblioteca';
 import Plantillas from '@/pages/plantillas';
+import IdeasIA from '@/pages/ideas-ia';
 import Marca from '@/pages/marca';
 import Ajustes from '@/pages/ajustes';
 import {
@@ -27,6 +28,7 @@ function Router() {
           <Route path="/" component={Studio} />
           <Route path="/biblioteca" component={Biblioteca} />
           <Route path="/plantillas" component={Plantillas} />
+          <Route path="/ideas-ia" component={IdeasIA} />
           <Route path="/marca" component={Marca} />
           <Route path="/ajustes" component={Ajustes} />
           <Route component={NotFound} />

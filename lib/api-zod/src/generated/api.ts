@@ -37,6 +37,88 @@ export const GetTemplatesResponseItem = zod.object({
 export const GetTemplatesResponse = zod.array(GetTemplatesResponseItem)
 
 
+export const GetTemplateBriefResponse = zod.object({
+  "sourceUrl": zod.string(),
+  "model": zod.string(),
+  "features": zod.array(zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "description": zod.string()
+}))
+})
+
+
+export const ListTemplateIdeasResponseItem = zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "prompt": zod.string(),
+  "audience": zod.enum(['organizers', 'athletes']),
+  "kind": zod.enum(['image', 'video']),
+  "category": zod.string(),
+  "feature": zod.string(),
+  "angle": zod.string(),
+  "reason": zod.string(),
+  "status": zod.enum(['suggested', 'saved', 'dismissed']),
+  "createdAt": zod.string()
+})
+export const ListTemplateIdeasResponse = zod.array(ListTemplateIdeasResponseItem)
+
+
+export const generateTemplateIdeasBodyFocusMax = 1500;
+
+export const generateTemplateIdeasBodyCountMax = 6;
+
+
+
+export const GenerateTemplateIdeasBody = zod.object({
+  "focus": zod.string().max(generateTemplateIdeasBodyFocusMax),
+  "audience": zod.enum(['all', 'organizers', 'athletes']),
+  "kind": zod.enum(['mixed', 'image', 'video']),
+  "count": zod.number().int().min(1).max(generateTemplateIdeasBodyCountMax)
+})
+
+export const GenerateTemplateIdeasResponseItem = zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "prompt": zod.string(),
+  "audience": zod.enum(['organizers', 'athletes']),
+  "kind": zod.enum(['image', 'video']),
+  "category": zod.string(),
+  "feature": zod.string(),
+  "angle": zod.string(),
+  "reason": zod.string(),
+  "status": zod.enum(['suggested', 'saved', 'dismissed']),
+  "createdAt": zod.string()
+})
+export const GenerateTemplateIdeasResponse = zod.array(GenerateTemplateIdeasResponseItem)
+
+
+export const UpdateTemplateIdeaParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const UpdateTemplateIdeaBody = zod.object({
+  "status": zod.enum(['saved', 'dismissed'])
+})
+
+export const UpdateTemplateIdeaResponse = zod.object({
+  "id": zod.string(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "prompt": zod.string(),
+  "audience": zod.enum(['organizers', 'athletes']),
+  "kind": zod.enum(['image', 'video']),
+  "category": zod.string(),
+  "feature": zod.string(),
+  "angle": zod.string(),
+  "reason": zod.string(),
+  "status": zod.enum(['suggested', 'saved', 'dismissed']),
+  "createdAt": zod.string()
+})
+
+
 export const ListCreationsResponseItem = zod.object({
   "id": zod.string(),
   "title": zod.string(),

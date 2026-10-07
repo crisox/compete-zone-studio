@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { randomUUID } from "node:crypto";
-import { db, creationsTable, brandTable, type StudioCreation } from "@workspace/db";
+import { db, creationsTable, brandTable, templateIdeasTable, type StudioCreation } from "@workspace/db";
 import { and, eq, desc, gte, lt, count } from "drizzle-orm";
 import {
   GetStudioStatusResponse, GetTemplatesResponse, ListCreationsResponse,
@@ -40,7 +40,10 @@ router.get("/studio/status", (_req, res) => {
     message: configured ? "Clave configurada en el servidor. Google aplica sus tarifas y cuotas; cada generación confirma el acceso al modelo." : "Configurá GEMINI_API_KEY en los secretos para generar contenido.",
   }));
 });
-router.get("/studio/templates", (_req, res) => res.json(GetTemplatesResponse.parse(templates)));
+router.get("/studio/templates", async (req, res) => {
+  const saved = req.user ? await db.select().from(templateIdeasTable).where(and(eq(templateIdeasTable.ownerId, req.user.id), eq(templateIdeasTable.status, "saved"))).orderBy(desc(templateIdeasTable.createdAt)) : [];
+  res.json(GetTemplatesResponse.parse([...templates, ...saved]));
+});
 router.get("/studio/brand", async (req, res) => res.json(GetBrandResponse.parse(await getBrandFor(req.user?.id))));
 router.put("/studio/brand", async (req, res): Promise<void> => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Iniciá sesión para guardar tu marca." }); return; }

@@ -11,24 +11,21 @@ export async function prepareLogo(logo: Buffer, width: number, height: number) {
   // Keep the original artwork and colors; only remove its outer blank margins.
   const trimmed = await sharp(logo).rotate().trim({ threshold: 8 }).png().toBuffer();
   const { data, info } = await sharp(trimmed).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-  let weightedLight = 0;
   let totalAlpha = 0;
   for (let i = 0; i < data.length; i += info.channels) {
     const alpha = data[i + 3] / 255;
     if (alpha < .1) continue;
-    weightedLight += (.2126 * data[i] + .7152 * data[i + 1] + .0722 * data[i + 2]) * alpha;
     totalAlpha += alpha;
   }
   if (totalAlpha === 0) throw new Error("El archivo del logo es completamente transparente. Cargá un logo visible en Marca.");
-  const lightArtwork = weightedLight / totalAlpha > 155;
-  const background = lightArtwork ? "#0F172A" : "#FFFFFF";
+  const background = "#FFFFFF";
   const padding = Math.max(8, Math.round(width * .015));
   const resized = await sharp(trimmed).resize({
     width: Math.round(width * .36),
     height: Math.round(height * .12),
     fit: "inside",
   }).png().toBuffer({ resolveWithObject: true });
-  // A contrast plate makes black/white transparent logos visible on every shot.
+  // The official artwork always sits on white, as requested by the brand owner.
   const plate = await sharp({
     create: {
       width: resized.info.width + padding * 2,
