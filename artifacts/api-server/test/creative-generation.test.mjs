@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import sharp from "sharp";
-import { buildPrompt, describeColors } from "../src/lib/creativePrompt.ts";
+import { buildPrompt, describeColors, withoutBrandTitle } from "../src/lib/creativePrompt.ts";
 import { prepareLogo, addOfficialLogo } from "../src/lib/logoOverlay.ts";
 
 const exec = promisify(execFile);
@@ -34,12 +34,31 @@ const artwork = (color) => sharp(Buffer.from(
   `<svg width="360" height="70"><rect x="20" y="15" width="320" height="40" fill="${color}"/></svg>`,
 )).png().toBuffer();
 
-test("black artwork gets a light contrast plate, white artwork gets a dark plate", async () => {
-  for (const [color, expected] of [["black", 255], ["white", 15]]) {
+test("official artwork always gets a white plate regardless of its colors", async () => {
+  for (const color of ["black", "white"]) {
     const { plate } = await prepareLogo(await artwork(color), 720, 1280);
     const { data } = await sharp(plate).raw().toBuffer({ resolveWithObject: true });
-    assert.equal(data[0], expected);
+    assert.equal(data[0], 255);
   }
+});
+
+test("brand title instructions are removed but the CTA domain is preserved", () => {
+  assert.equal(withoutBrandTitle("CompeteZone Compete Zone Compete-Zone competezone.fit"), "competezone.fit");
+  const prompt = buildPrompt({ ...input, prompt: "Mostrá «CompeteZone» como título. CTA competezone.fit." }, brand);
+  assert.doesNotMatch(prompt, /Nombre escrito/);
+  assert.match(prompt, /Nunca escribas el nombre de la marca/);
+  assert.match(prompt, /competezone\.fit/);
+  assert.doesNotMatch(prompt.split("IDEA CREATIVA")[1].split("DIRECCIÓN VISUAL")[0], /competezone(?!\.fit)/i);
+});
+
+test("video narration uses exact brand and domain pronunciation, without changing visible URL", () => {
+  const prompt = buildPrompt(input, brand);
+  assert.match(prompt, /se dice exactamente «compit son»/);
+  assert.match(prompt, /se dice exactamente «compit son punto fit»/);
+  assert.match(prompt, /incluso si la idea o una plantilla usan otra pronunciación/);
+  assert.match(prompt, /nunca las escribas en pantalla ni en subtítulos/);
+  assert.match(prompt, /dirección web visible debe seguir siendo competezone\.fit/);
+  assert.doesNotMatch(prompt, /Compit Zone/);
 });
 
 test("empty transparent artwork cannot silently produce a logo-less creation", async () => {

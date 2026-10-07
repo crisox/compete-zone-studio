@@ -110,6 +110,7 @@ export default function Studio() {
       setPrompt(p.prompt ?? '');
       if (p.audience) setAudience(p.audience);
       if (p.kind) setKind(p.kind);
+      if (p.includeLogo) setIncludeLogo(true);
     } catch {
       /* ignore */
     }
@@ -270,11 +271,11 @@ export default function Studio() {
           </div>
 
           <label className={cn('flex items-start gap-3 rounded-lg border p-3', !brand.data?.logoUrl && 'opacity-70')}>
-            <input type="checkbox" data-testid="checkbox-logo" className="mt-1 h-4 w-4 accent-[#0053B4]" disabled={!brand.data?.logoUrl} checked={includeLogo} onChange={(e) => setIncludeLogo(e.target.checked)} />
+            <input type="checkbox" data-testid="checkbox-logo" className="mt-1 h-4 w-4 accent-[#0053B4]" disabled={!brand.data?.logoUrl && !includeLogo} checked={includeLogo} onChange={(e) => setIncludeLogo(e.target.checked)} />
             <span className="text-sm">
               <b>Incluir el logo oficial</b>
               <span className="block text-muted-foreground">
-                {brand.data?.logoUrl ? 'Se agrega arriba a la izquierda, con fondo de contraste y durante todo el video. Usamos el archivo original.' : (<>Todavía no subiste el logo. <Link href="/marca" className="font-semibold text-primary underline">Subilo en Marca</Link> y guardá los cambios. Nunca lo inventamos.</>)}
+                {brand.data?.logoUrl ? 'Logo original sobre fondo blanco, arriba a la izquierda y durante todo el video. Reemplaza el nombre escrito de la marca.' : (<>Todavía no subiste el logo. <Link href="/marca" className="font-semibold text-primary underline">Subilo en Marca</Link> y guardá los cambios. Nunca lo inventamos.</>)}
               </span>
             </span>
           </label>

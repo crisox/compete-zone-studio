@@ -32,6 +32,10 @@ import type {
   MobileTokenExchangeSuccess,
   StudioStatus,
   StudioSummary,
+  TemplateBrief,
+  TemplateIdea,
+  TemplateIdeaGenerationInput,
+  TemplateIdeaUpdate,
   UploadUrlRequest,
   UploadUrlResponse
 } from './api.schemas';
@@ -282,6 +286,313 @@ export function useGetTemplates<TData = Awaited<ReturnType<typeof getTemplates>>
 
 
 
+
+export const getGetTemplateBriefUrl = () => {
+
+
+
+
+  return `/api/studio/template-brief`
+}
+
+export const getTemplateBrief = async ( options?: Parameters<typeof customFetch>[1]): Promise<TemplateBrief> => {
+
+  return customFetch<TemplateBrief>(getGetTemplateBriefUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTemplateBriefQueryKey = () => {
+    return [
+    `/api/studio/template-brief`
+    ] as const;
+    }
+
+
+export const getGetTemplateBriefQueryOptions = <TData = Awaited<ReturnType<typeof getTemplateBrief>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTemplateBrief>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTemplateBriefQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTemplateBrief>>> = ({ signal }) => getTemplateBrief({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTemplateBrief>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetTemplateBriefQueryResult = NonNullable<Awaited<ReturnType<typeof getTemplateBrief>>>
+export type GetTemplateBriefQueryError = ErrorType<unknown>
+
+
+
+export function useGetTemplateBrief<TData = Awaited<ReturnType<typeof getTemplateBrief>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTemplateBrief>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetTemplateBriefQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListTemplateIdeasUrl = () => {
+
+
+
+
+  return `/api/studio/template-ideas`
+}
+
+export const listTemplateIdeas = async ( options?: Parameters<typeof customFetch>[1]): Promise<TemplateIdea[]> => {
+
+  return customFetch<TemplateIdea[]>(getListTemplateIdeasUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListTemplateIdeasQueryKey = () => {
+    return [
+    `/api/studio/template-ideas`
+    ] as const;
+    }
+
+
+export const getListTemplateIdeasQueryOptions = <TData = Awaited<ReturnType<typeof listTemplateIdeas>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTemplateIdeas>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListTemplateIdeasQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTemplateIdeas>>> = ({ signal }) => listTemplateIdeas({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTemplateIdeas>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListTemplateIdeasQueryResult = NonNullable<Awaited<ReturnType<typeof listTemplateIdeas>>>
+export type ListTemplateIdeasQueryError = ErrorType<unknown>
+
+
+
+export function useListTemplateIdeas<TData = Awaited<ReturnType<typeof listTemplateIdeas>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTemplateIdeas>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListTemplateIdeasQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGenerateTemplateIdeasUrl = () => {
+
+
+
+
+  return `/api/studio/template-ideas/generate`
+}
+
+export const generateTemplateIdeas = async (templateIdeaGenerationInput: TemplateIdeaGenerationInput, options?: Parameters<typeof customFetch>[1]): Promise<TemplateIdea[]> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<TemplateIdea[]>(getGenerateTemplateIdeasUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(templateIdeaGenerationInput)
+  }
+);}
+
+
+
+
+
+export const getGenerateTemplateIdeasMutationKey = () => ['generateTemplateIdeas'] as const;
+
+export const getGenerateTemplateIdeasMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateTemplateIdeas>>, TError,GenerateTemplateIdeasMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof generateTemplateIdeas>>, TError,GenerateTemplateIdeasMutationVariables, TContext> => {
+
+const mutationKey = getGenerateTemplateIdeasMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateTemplateIdeas>>, GenerateTemplateIdeasMutationVariables> = (props) => {
+          const {data} = props ?? {};
+
+          return  generateTemplateIdeas(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GenerateTemplateIdeasMutationResult = NonNullable<Awaited<ReturnType<typeof generateTemplateIdeas>>>
+    export type GenerateTemplateIdeasMutationBody = BodyType<TemplateIdeaGenerationInput>
+    export type GenerateTemplateIdeasMutationError = ErrorType<unknown>
+    export type GenerateTemplateIdeasMutationVariables = {data: BodyType<TemplateIdeaGenerationInput>}
+
+    export const useGenerateTemplateIdeas = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateTemplateIdeas>>, TError,GenerateTemplateIdeasMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof generateTemplateIdeas>>,
+        TError,
+        GenerateTemplateIdeasMutationVariables,
+        TContext
+      > => {
+      return useMutation(getGenerateTemplateIdeasMutationOptions(options));
+    }
+
+export const getUpdateTemplateIdeaUrl = (id: string,) => {
+
+
+
+
+  return `/api/studio/template-ideas/${id}`
+}
+
+export const updateTemplateIdea = async (id: string,
+    templateIdeaUpdate: TemplateIdeaUpdate, options?: Parameters<typeof customFetch>[1]): Promise<TemplateIdea> => {
+
+    const getHeaders = (h?: NonNullable<RequestInit['headers']>): Record<string, string | readonly string[]> => {
+    if (!h) return {};
+    if (h instanceof Headers) return Object.fromEntries(h.entries());
+    if (Symbol.iterator in h) {
+      return Object.fromEntries(
+        Array.from(h as Iterable<Iterable<string>>, (entry) => Array.from(entry) as [string, string]),
+      );
+    }
+    const headers: Record<string, string | readonly string[]> = {};
+    for (const [name, value] of Object.entries<string | readonly string[] | undefined>(h)) {
+      if (value !== undefined) headers[name] = value;
+    }
+    return headers;
+  };
+return customFetch<TemplateIdea>(getUpdateTemplateIdeaUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...getHeaders(options?.headers) },
+    body: JSON.stringify(templateIdeaUpdate)
+  }
+);}
+
+
+
+
+
+export const getUpdateTemplateIdeaMutationKey = () => ['updateTemplateIdea'] as const;
+
+export const getUpdateTemplateIdeaMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTemplateIdea>>, TError,UpdateTemplateIdeaMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateTemplateIdea>>, TError,UpdateTemplateIdeaMutationVariables, TContext> => {
+
+const mutationKey = getUpdateTemplateIdeaMutationKey();
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateTemplateIdea>>, UpdateTemplateIdeaMutationVariables> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateTemplateIdea(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateTemplateIdeaMutationResult = NonNullable<Awaited<ReturnType<typeof updateTemplateIdea>>>
+    export type UpdateTemplateIdeaMutationBody = BodyType<TemplateIdeaUpdate>
+    export type UpdateTemplateIdeaMutationError = ErrorType<unknown>
+    export type UpdateTemplateIdeaMutationVariables = {id: string;data: BodyType<TemplateIdeaUpdate>}
+
+    export const useUpdateTemplateIdea = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateTemplateIdea>>, TError,UpdateTemplateIdeaMutationVariables, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateTemplateIdea>>,
+        TError,
+        UpdateTemplateIdeaMutationVariables,
+        TContext
+      > => {
+      return useMutation(getUpdateTemplateIdeaMutationOptions(options));
+    }
 
 export const getListCreationsUrl = () => {
 

@@ -42,6 +42,100 @@ export interface CreativeTemplate {
   category: string;
 }
 
+export type TemplateBriefFeaturesItem = {
+  id: string;
+  title: string;
+  description: string;
+};
+
+export interface TemplateBrief {
+  sourceUrl: string;
+  model: string;
+  features: TemplateBriefFeaturesItem[];
+}
+
+export type TemplateIdeaGenerationInputAudience = typeof TemplateIdeaGenerationInputAudience[keyof typeof TemplateIdeaGenerationInputAudience];
+
+
+export const TemplateIdeaGenerationInputAudience = {
+  all: 'all',
+  organizers: 'organizers',
+  athletes: 'athletes',
+} as const;
+
+export type TemplateIdeaGenerationInputKind = typeof TemplateIdeaGenerationInputKind[keyof typeof TemplateIdeaGenerationInputKind];
+
+
+export const TemplateIdeaGenerationInputKind = {
+  mixed: 'mixed',
+  image: 'image',
+  video: 'video',
+} as const;
+
+export interface TemplateIdeaGenerationInput {
+  /** @maxLength 1500 */
+  focus: string;
+  audience: TemplateIdeaGenerationInputAudience;
+  kind: TemplateIdeaGenerationInputKind;
+  /**
+     * @minimum 1
+     * @maximum 6
+     */
+  count: number;
+}
+
+export type TemplateIdeaUpdateStatus = typeof TemplateIdeaUpdateStatus[keyof typeof TemplateIdeaUpdateStatus];
+
+
+export const TemplateIdeaUpdateStatus = {
+  saved: 'saved',
+  dismissed: 'dismissed',
+} as const;
+
+export interface TemplateIdeaUpdate {
+  status: TemplateIdeaUpdateStatus;
+}
+
+export type TemplateIdeaAudience = typeof TemplateIdeaAudience[keyof typeof TemplateIdeaAudience];
+
+
+export const TemplateIdeaAudience = {
+  organizers: 'organizers',
+  athletes: 'athletes',
+} as const;
+
+export type TemplateIdeaKind = typeof TemplateIdeaKind[keyof typeof TemplateIdeaKind];
+
+
+export const TemplateIdeaKind = {
+  image: 'image',
+  video: 'video',
+} as const;
+
+export type TemplateIdeaStatus = typeof TemplateIdeaStatus[keyof typeof TemplateIdeaStatus];
+
+
+export const TemplateIdeaStatus = {
+  suggested: 'suggested',
+  saved: 'saved',
+  dismissed: 'dismissed',
+} as const;
+
+export interface TemplateIdea {
+  id: string;
+  title: string;
+  description: string;
+  prompt: string;
+  audience: TemplateIdeaAudience;
+  kind: TemplateIdeaKind;
+  category: string;
+  feature: string;
+  angle: string;
+  reason: string;
+  status: TemplateIdeaStatus;
+  createdAt: string;
+}
+
 export type CreationInputKind = typeof CreationInputKind[keyof typeof CreationInputKind];
 
 

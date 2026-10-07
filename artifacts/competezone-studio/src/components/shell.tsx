@@ -5,16 +5,19 @@ import { useAuth } from '@workspace/replit-auth-web';
 import {
   getGetBrandQueryKey,
   getGetStudioSummaryQueryKey,
+  getGetTemplatesQueryKey,
   getListCreationsQueryKey,
+  getListTemplateIdeasQueryKey,
   useGetStudioSummary,
 } from '@workspace/api-client-react';
-import { Clapperboard, FolderOpen, LayoutTemplate, LogIn, LogOut, Palette, Settings2, Sparkles } from 'lucide-react';
+import { Clapperboard, FolderOpen, Lightbulb, LayoutTemplate, LogIn, LogOut, Palette, Settings2, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const NAV = [
   { href: '/', label: 'Crear', icon: Sparkles },
   { href: '/biblioteca', label: 'Biblioteca', icon: FolderOpen },
   { href: '/plantillas', label: 'Plantillas', icon: LayoutTemplate },
+  { href: '/ideas-ia', label: 'Ideas IA', icon: Lightbulb },
   { href: '/marca', label: 'Marca', icon: Palette },
   { href: '/ajustes', label: 'Ajustes', icon: Settings2 },
 ];
@@ -26,6 +29,8 @@ export function useAuthCacheSync() {
   useEffect(() => {
     if (isLoading) return;
     if (prev.current !== null && prev.current !== isAuthenticated) {
+      qc.removeQueries({ queryKey: getListTemplateIdeasQueryKey() });
+      qc.invalidateQueries({ queryKey: getGetTemplatesQueryKey() });
       qc.removeQueries({ queryKey: getListCreationsQueryKey() });
       qc.removeQueries({ queryKey: getGetStudioSummaryQueryKey() });
       qc.invalidateQueries({ queryKey: getGetBrandQueryKey() });
@@ -153,14 +158,14 @@ export function Shell({ children }: { children: ReactNode }) {
 
       <main className="mx-auto max-w-6xl px-4 pb-28 pt-6 md:px-8 md:pb-16 md:pt-10">{children}</main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-white/10 bg-sidebar md:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-6 border-t border-white/10 bg-sidebar md:hidden">
         {NAV.map((n) => (
           <Link
             key={n.href}
             href={n.href}
             data-testid={`link-tab-${n.label.toLowerCase()}`}
             className={cn(
-              'flex flex-col items-center gap-1 py-2.5 text-[10px] font-semibold',
+              'flex min-w-0 flex-col items-center gap-1 px-0.5 py-2.5 text-[10px] font-semibold',
               active(n.href) ? 'text-accent' : 'text-slate-400',
             )}
           >

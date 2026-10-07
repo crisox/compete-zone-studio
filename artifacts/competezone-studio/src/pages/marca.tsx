@@ -80,7 +80,7 @@ export default function Marca() {
             <div>
               <span className={lbl}>Nombre</span>
               <div className="text-2xl font-black" data-testid="text-brand-name">{b.name}</div>
-              <p className="text-xs text-muted-foreground">En audio se pronuncia "Compit Zone".</p>
+              <p className="text-xs text-muted-foreground">En audio: “compit son”. El sitio: “compit son punto fit”. En pantalla la dirección sigue siendo competezone.fit.</p>
             </div>
             <div>
               <label className={lbl} htmlFor="tagline">Frase</label>

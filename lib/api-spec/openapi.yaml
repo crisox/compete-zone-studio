@@ -46,6 +46,64 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/CreativeTemplate"
+  /studio/template-brief:
+    get:
+      operationId: getTemplateBrief
+      responses:
+        "200":
+          description: Verified product features for creative planning
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateBrief"
+  /studio/template-ideas:
+    get:
+      operationId: listTemplateIdeas
+      responses:
+        "200":
+          description: Private proposed and saved template ideas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TemplateIdea"
+  /studio/template-ideas/generate:
+    post:
+      operationId: generateTemplateIdeas
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TemplateIdeaGenerationInput"
+      responses:
+        "200":
+          description: New proposals, persisted for review
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TemplateIdea"
+  /studio/template-ideas/{id}:
+    patch:
+      operationId: updateTemplateIdea
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TemplateIdeaUpdate"
+      responses:
+        "200":
+          description: Saved to templates or dismissed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateIdea"
   /studio/creations:
     get:
       operationId: listCreations
@@ -222,6 +280,50 @@ components:
         audience: { type: string, enum: [organizers, athletes] }
         kind: { type: string, enum: [image, video] }
         category: { type: string }
+    TemplateBrief:
+      type: object
+      required: [sourceUrl, model, features]
+      properties:
+        sourceUrl: { type: string }
+        model: { type: string }
+        features:
+          type: array
+          items:
+            type: object
+            required: [id, title, description]
+            properties:
+              id: { type: string }
+              title: { type: string }
+              description: { type: string }
+    TemplateIdeaGenerationInput:
+      type: object
+      required: [focus, audience, kind, count]
+      properties:
+        focus: { type: string, maxLength: 1500 }
+        audience: { type: string, enum: [all, organizers, athletes] }
+        kind: { type: string, enum: [mixed, image, video] }
+        count: { type: integer, minimum: 1, maximum: 6 }
+    TemplateIdeaUpdate:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [saved, dismissed] }
+    TemplateIdea:
+      type: object
+      required: [id, title, description, prompt, audience, kind, category, feature, angle, reason, status, createdAt]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        description: { type: string }
+        prompt: { type: string }
+        audience: { type: string, enum: [organizers, athletes] }
+        kind: { type: string, enum: [image, video] }
+        category: { type: string }
+        feature: { type: string }
+        angle: { type: string }
+        reason: { type: string }
+        status: { type: string, enum: [suggested, saved, dismissed] }
+        createdAt: { type: string }
     CreationInput:
       type: object
       required: [title, prompt, kind, audience, aspectRatio]

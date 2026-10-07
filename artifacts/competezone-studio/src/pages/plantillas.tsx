@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useLocation } from 'wouter';
+import { Link, useLocation } from 'wouter';
 import { getGetTemplatesQueryKey, useGetTemplates } from '@workspace/api-client-react';
 import { ArrowRight, Film, Image as ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -15,7 +15,7 @@ export default function Plantillas() {
   const pick = (t: NonNullable<typeof q.data>[number]) => {
     sessionStorage.setItem(
       PREFILL_KEY,
-      JSON.stringify({ title: t.title, prompt: t.prompt, audience: t.audience, kind: t.kind }),
+      JSON.stringify({ title: t.title, prompt: t.prompt, audience: t.audience, kind: t.kind, includeLogo: true }),
     );
     nav('/');
   };
@@ -31,6 +31,11 @@ export default function Plantillas() {
           ))}
         </div>
       </PageHead>
+
+      <Link href="/ideas-ia" data-testid="link-ideas-ia" className="mb-6 flex items-center justify-between gap-3 rounded-xl bg-sidebar p-4 text-white">
+        <span className="text-sm font-semibold">Nuevas ideas con IA basadas en funciones reales del producto.</span>
+        <span className="inline-flex shrink-0 items-center gap-1.5 text-sm font-bold text-accent">Ideas IA <ArrowRight className="h-4 w-4" /></span>
+      </Link>
 
       {q.isLoading ? (
         <div className="grid gap-4 md:grid-cols-2">

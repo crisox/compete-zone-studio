@@ -19,6 +19,7 @@ interface ProviderOutput {
   mime_type?: string;
   data?: string;
   uri?: string;
+  text?: string;
 }
 interface Interaction {
   id?: string;
@@ -31,13 +32,13 @@ interface Interaction {
   promptFeedback?: { blockReason?: string };
 }
 
-function sanitizeMessage(message: string): string {
+export function sanitizeMessage(message: string): string {
   const key = process.env.GEMINI_API_KEY;
   return (key ? message.replaceAll(key, "[clave protegida]") : message)
     .replace(/https?:\/\/\S+/g, "[URL del proveedor]").slice(0, 500);
 }
 
-async function googleJson(path: string, method: "POST" | "GET", body?: unknown) {
+export async function googleJson(path: string, method: "POST" | "GET", body?: unknown) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error("Falta configurar GEMINI_API_KEY como secreto del servidor.");
   const response = await fetch(`${googleBase}${path}`, {
