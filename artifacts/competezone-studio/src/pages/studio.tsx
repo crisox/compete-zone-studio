@@ -160,7 +160,7 @@ export default function Studio() {
           audience,
           aspectRatio: ratio,
           referencePaths: paths.length ? paths : undefined,
-          includeLogo: includeLogo && !!brand.data?.logoUrl,
+          includeLogo,
         },
       },
       {
@@ -274,7 +274,7 @@ export default function Studio() {
             <span className="text-sm">
               <b>Incluir el logo oficial</b>
               <span className="block text-muted-foreground">
-                {brand.data?.logoUrl ? 'Usamos el archivo que subiste, sin redibujarlo.' : (<>Todavía no subiste el logo. <Link href="/marca" className="font-semibold text-primary underline">Subilo en Marca</Link>. Nunca lo inventamos.</>)}
+                {brand.data?.logoUrl ? 'Se agrega arriba a la izquierda, con fondo de contraste y durante todo el video. Usamos el archivo original.' : (<>Todavía no subiste el logo. <Link href="/marca" className="font-semibold text-primary underline">Subilo en Marca</Link> y guardá los cambios. Nunca lo inventamos.</>)}
               </span>
             </span>
           </label>

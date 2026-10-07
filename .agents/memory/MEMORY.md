@@ -1,1 +1,2 @@
 - [Preview instrumentation](preview-instrumentation.md) — Replit's JSX metadata transform can reject explicit type arguments on component tags.
+- [Omni prompt leakage](omni-prompt-leakage.md) — palette codes can appear on background signage as well as title cards; describe colors in words.
