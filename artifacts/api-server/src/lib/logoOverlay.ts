@@ -18,23 +18,13 @@ export async function prepareLogo(logo: Buffer, width: number, height: number) {
     totalAlpha += alpha;
   }
   if (totalAlpha === 0) throw new Error("El archivo del logo es completamente transparente. Cargá un logo visible en Marca.");
-  const background = "#FFFFFF";
-  const padding = Math.max(8, Math.round(width * .015));
-  const resized = await sharp(trimmed).resize({
+  const overlay = await sharp(trimmed).resize({
     width: Math.round(width * .36),
     height: Math.round(height * .12),
     fit: "inside",
-  }).png().toBuffer({ resolveWithObject: true });
-  // The official artwork always sits on white, as requested by the brand owner.
-  const plate = await sharp({
-    create: {
-      width: resized.info.width + padding * 2,
-      height: resized.info.height + padding * 2,
-      channels: 4,
-      background,
-    },
-  }).composite([{ input: resized.data, left: padding, top: padding }]).png().toBuffer();
-  return { plate, left: Math.round(width * .045), top: Math.round(height * .045) };
+  }).png().toBuffer();
+  // Preserve the uploaded alpha channel; never add a background or contrast box.
+  return { overlay, left: Math.round(width * .045), top: Math.round(height * .045) };
 }
 
 export async function addOfficialLogo(bytes: Buffer, logo: Buffer, kind: string) {
@@ -42,8 +32,8 @@ export async function addOfficialLogo(bytes: Buffer, logo: Buffer, kind: string)
     const normalized = await sharp(bytes).rotate().toBuffer();
     const meta = await sharp(normalized).metadata();
     if (!meta.width || !meta.height) throw new Error("No se pudo leer el tamaño de la imagen.");
-    const { plate, left, top } = await prepareLogo(logo, meta.width, meta.height);
-    return sharp(normalized).composite([{ input: plate, left, top }]).png().toBuffer();
+    const { overlay, left, top } = await prepareLogo(logo, meta.width, meta.height);
+    return sharp(normalized).composite([{ input: overlay, left, top }]).png().toBuffer();
   }
   const dir = await mkdtemp(join(tmpdir(), "competezone-"));
   try {
@@ -52,8 +42,8 @@ export async function addOfficialLogo(bytes: Buffer, logo: Buffer, kind: string)
     const probe = await exec("ffprobe", ["-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height", "-of", "json", input], { timeout: 30_000 });
     const dimensions = JSON.parse(probe.stdout).streams?.[0] as { width: number; height: number };
     if (!dimensions?.width || !dimensions.height) throw new Error("No se pudo leer el tamaño del video.");
-    const { plate, left, top } = await prepareLogo(logo, dimensions.width, dimensions.height);
-    await writeFile(logoFile, plate);
+    const { overlay, left, top } = await prepareLogo(logo, dimensions.width, dimensions.height);
+    await writeFile(logoFile, overlay);
     // Explicitly repeat the logo's frame to the end. Copy the existing audio,
     // keep the source duration and produce a broadly playable MP4.
     await exec("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y",

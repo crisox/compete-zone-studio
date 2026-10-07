@@ -24,7 +24,8 @@ test("planning includes existing ideas, verified features, audience and format f
   assert.match(prompt, /no prometer resultados en vivo/i);
   assert.match(prompt, /3 propuestas/);
   assert.match(prompt, /Público solicitado: athletes/);
-  assert.match(prompt, /logo oficial.*fondo blanco/);
+  assert.match(prompt, /logo oficial.*transparencia/);
+  assert.doesNotMatch(prompt, /sobre fondo blanco/);
   assert.match(prompt, /exactamente «compit son»/);
   assert.match(prompt, /exactamente «compit son punto fit»/);
   assert.match(prompt, /CTA visible «competezone\.fit»/);

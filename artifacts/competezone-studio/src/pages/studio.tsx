@@ -275,7 +275,7 @@ export default function Studio() {
             <span className="text-sm">
               <b>Incluir el logo oficial</b>
               <span className="block text-muted-foreground">
-                {brand.data?.logoUrl ? 'Logo original sobre fondo blanco, arriba a la izquierda y durante todo el video. Reemplaza el nombre escrito de la marca.' : (<>Todavía no subiste el logo. <Link href="/marca" className="font-semibold text-primary underline">Subilo en Marca</Link> y guardá los cambios. Nunca lo inventamos.</>)}
+                {brand.data?.logoUrl ? 'Logo original sin fondos agregados: conservamos la transparencia, arriba a la izquierda y durante todo el video. Reemplaza el nombre escrito de la marca.' : (<>Todavía no subiste el logo. <Link href="/marca" className="font-semibold text-primary underline">Subilo en Marca</Link> y guardá los cambios. Nunca lo inventamos.</>)}
               </span>
             </span>
           </label>

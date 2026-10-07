@@ -3,11 +3,11 @@ name: Brand promotion rules
 description: User requirements for official logo presentation and feature-led promotional template strategy.
 ---
 
-The official logo must appear on a white background. The generated creative must not add “CompeteZone” as a separate written title or substitute wordmark: use the official logo instead.
+Preserve the uploaded official logo's transparency: do not add a white background, contrast plate or box. The generated creative must not add “CompeteZone” as a separate written title or substitute wordmark: use the official logo instead.
 
-**Why:** The user supplied a video frame with the correct logo plus an unwanted, separately generated brand-name heading and explicitly requested replacing the letters with the logo.
+**Why:** The user corrected the earlier white-background requirement after seeing an unwanted white rectangle around an uploaded transparent logo. They also requested replacing separately generated brand-name headings with the official logo.
 
-**How to apply:** Preserve the uploaded artwork, use a white plate, and keep standalone brand-name typography out of image/video instructions and template prompts. The web address remains the campaign CTA.
+**How to apply:** Preserve the original artwork and alpha channel when compositing images and videos. Keep standalone brand-name typography out of creative instructions and template prompts. The web address remains the campaign CTA.
 
 In video speech, pronounce CompeteZone / Compete Zone as “compit son” and competezone.fit as “compit son punto fit”.
 
