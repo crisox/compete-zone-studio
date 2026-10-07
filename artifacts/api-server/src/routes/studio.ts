@@ -6,11 +6,13 @@ import {
   GetStudioStatusResponse, GetTemplatesResponse, ListCreationsResponse,
   CreateCreationBody, CreateCreationResponse, GetCreationParams, GetCreationResponse,
   DeleteCreationParams, GetBrandResponse, UpdateBrandBody, UpdateBrandResponse, GetStudioSummaryResponse,
+  GetCreationMetadataResponse, GetCreationMetadataParams,
 } from "@workspace/api-zod";
 import { brandDefaults, templates } from "../lib/brand";
 import { IMAGE_MODEL, VIDEO_MODEL, runGeneration } from "../lib/generation";
 import { ownedUpload } from "./storage";
 import { normalizeTemplatePronunciation } from "../lib/templatePronunciation";
+import { createGenerationMetadata, legacyGenerationMetadata } from "../lib/generationMetadata";
 
 const router: IRouter = Router();
 const starting = new Set<string>();
@@ -97,15 +99,28 @@ router.post("/studio/creations", async (req, res): Promise<void> => {
     if (input.includeLogo && !brand.logoPath) { res.status(400).json({ error: "Primero cargá el logo oficial en Marca." }); return; }
     try { await Promise.all((input.referencePaths ?? []).map(path => ownedUpload(path, ownerId))); }
     catch (error) { res.status(400).json({ error: error instanceof Error ? error.message : "Referencia inválida." }); return; }
+    const metadata = input.kind === "video" ? createGenerationMetadata(input, brand, process.env.GEMINI_API_KEY) : null;
     const [row] = await db.insert(creationsTable).values({
       id: randomUUID(), ownerId, title: input.title, prompt: input.prompt,
       kind: input.kind, audience: input.audience, aspectRatio: input.aspectRatio,
       model: input.kind === "image" ? IMAGE_MODEL : VIDEO_MODEL,
+      generationMetadata: metadata,
     }).returning();
     // State is committed before starting expensive work, allowing reload/polling.
-    void runGeneration(row.id, ownerId, input, brand).catch(() => req.log.error({ creationId: row.id }, "Failed to record generation result"));
+    void runGeneration(row.id, ownerId, input, brand, metadata ?? undefined).catch(() => req.log.error({ creationId: row.id }, "Failed to record generation result"));
     res.status(202).json(CreateCreationResponse.parse(serialize(row)));
   } finally { starting.delete(ownerId); }
+});
+router.get("/studio/creations/:id/metadata", async (req, res): Promise<void> => {
+  res.set("Cache-Control", "private, no-store");
+  res.vary("Cookie");
+  res.vary("Authorization");
+  if (!req.isAuthenticated()) { res.status(401).json({ error: "Ingresá para ver los datos técnicos de tus videos." }); return; }
+  const params = GetCreationMetadataParams.safeParse(req.params);
+  if (!params.success) { res.status(400).json({ error: "Identificador inválido." }); return; }
+  const [row] = await db.select().from(creationsTable).where(and(eq(creationsTable.id, params.data.id), eq(creationsTable.ownerId, req.user.id)));
+  if (!row) { res.status(404).json({ error: "No encontramos esa creación." }); return; }
+  res.json(GetCreationMetadataResponse.parse(row.generationMetadata ?? legacyGenerationMetadata(row)));
 });
 router.get("/studio/creations/:id", async (req, res): Promise<void> => {
   if (!req.isAuthenticated()) { res.status(401).json({ error: "Iniciá sesión para ver tu creación." }); return; }

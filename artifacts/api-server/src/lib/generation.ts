@@ -1,7 +1,7 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { db, creationsTable } from "@workspace/db";
-import type { CreationInput } from "@workspace/api-zod";
+import type { CreationInput, GenerationMetadata, ProviderRequestMetadata } from "@workspace/api-zod";
 import type { StudioBrand } from "./brand";
 import { objectStorageClient, ObjectStorageService } from "./objectStorage";
 import { ownedUpload } from "../routes/storage";
@@ -9,6 +9,7 @@ import { logger } from "./logger";
 import { buildPrompt } from "./creativePrompt";
 import { addOfficialLogo, prepareLogo } from "./logoOverlay";
 import { speechPlanSchema, speechPlanJsonSchema, speechPlanPrompt, validatedSpeechText } from "./speechPlan";
+import { createGenerationMetadata, addRequestMetadata, safeMetadataJson } from "./generationMetadata";
 
 export const IMAGE_MODEL = "gemini-nano-banana-2.1";
 export const VIDEO_MODEL = "gemini-omni-1.1-flash";
@@ -70,8 +71,32 @@ async function saveGenerated(bytes: Buffer, mime: string) {
   return path;
 }
 
-export async function runGeneration(id: string, ownerId: string, input: CreationInput, brand: StudioBrand) {
+export async function runGeneration(id: string, ownerId: string, input: CreationInput, brand: StudioBrand, initialMetadata?: GenerationMetadata) {
+  const metadata = input.kind === "video" ? initialMetadata ?? createGenerationMetadata(input, brand, process.env.GEMINI_API_KEY) : undefined;
+  const persistMetadata = async () => {
+    if (metadata) await db.update(creationsTable).set({ generationMetadata: metadata }).where(eq(creationsTable.id, id));
+  };
+  const tracedRequest = async (stage: ProviderRequestMetadata["stage"], path: string, method: "POST" | "GET", model: string, body?: unknown) => {
+    if (!metadata) return googleJson(path, method, body);
+    const request = addRequestMetadata(metadata, stage, method, path, model, body, process.env.GEMINI_API_KEY);
+    // Commit a safe snapshot BEFORE the paid call. If capture fails, don't submit.
+    await persistMetadata();
+    try {
+      const payload = await googleJson(path, method, body);
+      request.state = "received";
+      request.respondedAt = new Date().toISOString();
+      request.interactionId = payload.id ? JSON.parse(safeMetadataJson({ id: payload.id }, process.env.GEMINI_API_KEY)).id : null;
+      await persistMetadata();
+      return payload;
+    } catch (error) {
+      if (request.state !== "received") request.state = "error";
+      request.respondedAt = new Date().toISOString();
+      await persistMetadata();
+      throw error;
+    }
+  };
   try {
+    await persistMetadata();
     const refs = await Promise.all((input.referencePaths ?? []).map(path => ownedUpload(path, ownerId)));
     let officialLogo: Buffer | undefined;
     if (input.includeLogo) {
@@ -79,6 +104,11 @@ export async function runGeneration(id: string, ownerId: string, input: Creation
       officialLogo = (await ownedUpload(brand.logoPath, ownerId)).bytes;
       // Validate the artwork before making a paid provider request.
       await prepareLogo(officialLogo, 720, 1280);
+      if (metadata) metadata.postProcessingJson = safeMetadataJson({
+        ...JSON.parse(metadata.postProcessingJson ?? "{}"),
+        logoByteLength: officialLogo.length,
+        logoSha256: createHash("sha256").update(officialLogo).digest("hex"),
+      });
     }
     let prompt = buildPrompt(input, brand);
     let bytes: Buffer;
@@ -99,7 +129,7 @@ export async function runGeneration(id: string, ownerId: string, input: Creation
     } else {
       // Give Omni a single, validated short script instead of conflicting long
       // narration and CTA instructions that may run past the video boundary.
-      const speechPayload = await googleJson("/interactions", "POST", {
+      const speechPayload = await tracedRequest("speech-planning", "/interactions", "POST", "gemini-3.8-flash", {
         model: "gemini-3.8-flash", store: false, stream: false, background: false,
         input: speechPlanPrompt(input, brand),
         response_format: { type: "text", mime_type: "application/json", schema: speechPlanJsonSchema },
@@ -110,8 +140,10 @@ export async function runGeneration(id: string, ownerId: string, input: Creation
       try { speechJson = JSON.parse(speechText); } catch { throw new Error("No se pudo preparar una locución válida. No se solicitó el video para evitar un guion cortado."); }
       const speech = speechPlanSchema.safeParse(speechJson);
       if (!speech.success) throw new Error("No se pudo ajustar la locución al tiempo disponible. No se solicitó el video; probá una idea más breve.");
-      prompt = buildPrompt(input, brand, validatedSpeechText(speech.data.spokenWords));
-      let payload: Interaction = await googleJson("/interactions", "POST", {
+      const spokenScript = validatedSpeechText(speech.data.spokenWords);
+      if (metadata) metadata.speechScript = spokenScript;
+      prompt = buildPrompt(input, brand, spokenScript);
+      let payload: Interaction = await tracedRequest("video-generation", "/interactions", "POST", VIDEO_MODEL, {
         model: VIDEO_MODEL,
         background: false,
         store: false,
@@ -126,7 +158,7 @@ export async function runGeneration(id: string, ownerId: string, input: Creation
       const deadline = Date.now() + 300_000;
       while (payload.id && ["in_progress", "running", "pending"].includes(payload.status ?? "") && Date.now() < deadline) {
         await new Promise(resolve => setTimeout(resolve, 4000));
-        payload = await googleJson(`/interactions/${encodeURIComponent(payload.id)}`, "GET");
+        payload = await tracedRequest("video-status", `/interactions/${encodeURIComponent(payload.id)}`, "GET", VIDEO_MODEL);
       }
       const outputs = [...(payload.outputs ?? []), ...(payload.steps ?? []).filter(step => step.type === "model_output").flatMap(step => step.content ?? [])];
       const video = payload.output_video ?? outputs.find(output => output.type === "video");
@@ -146,17 +178,28 @@ export async function runGeneration(id: string, ownerId: string, input: Creation
       mime = "video/mp4";
     }
     if (!bytes.length || bytes.length > 150 * 1024 * 1024) throw new Error("El archivo generado está vacío o supera el tamaño admitido.");
+    const providerByteLength = bytes.length;
     if (input.includeLogo) {
       if (!officialLogo) throw new Error("No se encontró el logo solicitado. No se guardará una creación sin logo.");
       bytes = await addOfficialLogo(bytes, officialLogo, input.kind);
       if (input.kind === "image") mime = "image/png";
+      if (metadata) metadata.postProcessingJson = safeMetadataJson({
+        ...JSON.parse(metadata.postProcessingJson ?? "{}"), logoApplied: true,
+        videoEncoding: "H.264 / yuv420p; audio original conservado",
+      });
     }
     const objectPath = await saveGenerated(bytes, mime);
-    await db.update(creationsTable).set({ status: "completed", objectPath, error: null }).where(eq(creationsTable.id, id));
+    if (metadata) metadata.resultJson = safeMetadataJson({
+      status: "completed", completedAt: new Date().toISOString(), mimeType: mime,
+      providerByteLength, storedByteLength: bytes.length,
+      storedSha256: createHash("sha256").update(bytes).digest("hex"),
+    });
+    await db.update(creationsTable).set({ status: "completed", objectPath, error: null, ...(metadata ? { generationMetadata: metadata } : {}) }).where(eq(creationsTable.id, id));
   } catch (error) {
     const message = error instanceof Error && error.name !== "TimeoutError"
       ? sanitizeMessage(error.message) : "La generación tardó demasiado. Revisá el historial de uso de Google antes de reintentar.";
     logger.warn({ creationId: id }, "Generation failed");
-    await db.update(creationsTable).set({ status: "failed", error: message }).where(eq(creationsTable.id, id));
+    if (metadata) metadata.resultJson = safeMetadataJson({ status: "failed", failedAt: new Date().toISOString(), error: message }, process.env.GEMINI_API_KEY);
+    await db.update(creationsTable).set({ status: "failed", error: message, ...(metadata ? { generationMetadata: metadata } : {}) }).where(eq(creationsTable.id, id));
   }
 }

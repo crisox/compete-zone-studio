@@ -280,6 +280,73 @@ export interface Creation {
   error?: string | null;
 }
 
+export type ProviderRequestMetadataStage = typeof ProviderRequestMetadataStage[keyof typeof ProviderRequestMetadataStage];
+
+
+export const ProviderRequestMetadataStage = {
+  'speech-planning': 'speech-planning',
+  'video-generation': 'video-generation',
+  'video-status': 'video-status',
+} as const;
+
+export type ProviderRequestMetadataMethod = typeof ProviderRequestMetadataMethod[keyof typeof ProviderRequestMetadataMethod];
+
+
+export const ProviderRequestMetadataMethod = {
+  POST: 'POST',
+  GET: 'GET',
+} as const;
+
+export type ProviderRequestMetadataState = typeof ProviderRequestMetadataState[keyof typeof ProviderRequestMetadataState];
+
+
+export const ProviderRequestMetadataState = {
+  prepared: 'prepared',
+  received: 'received',
+  error: 'error',
+} as const;
+
+export interface ProviderRequestMetadata {
+  stage: ProviderRequestMetadataStage;
+  method: ProviderRequestMetadataMethod;
+  apiPath: string;
+  model: string;
+  requestedAt: string;
+  state: ProviderRequestMetadataState;
+  /** @nullable */
+  payloadJson: string | null;
+  /** @nullable */
+  respondedAt?: string | null;
+  /** @nullable */
+  interactionId?: string | null;
+}
+
+export type GenerationMetadataAvailability = typeof GenerationMetadataAvailability[keyof typeof GenerationMetadataAvailability];
+
+
+export const GenerationMetadataAvailability = {
+  recorded: 'recorded',
+  legacy: 'legacy',
+} as const;
+
+export interface GenerationMetadata {
+  version: number;
+  availability: GenerationMetadataAvailability;
+  /** @nullable */
+  recordedAt: string | null;
+  originalInputJson: string;
+  /** @nullable */
+  brandSnapshotJson: string | null;
+  /** @nullable */
+  speechScript: string | null;
+  requests: ProviderRequestMetadata[];
+  /** @nullable */
+  postProcessingJson: string | null;
+  /** @nullable */
+  resultJson: string | null;
+  limitations: string[];
+}
+
 export interface BrandInput {
   /** @maxLength 200 */
   tagline: string;

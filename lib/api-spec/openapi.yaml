@@ -147,6 +147,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Creation"
+  /studio/creations/{id}/metadata:
+    get:
+      operationId: getCreationMetadata
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Owner-only technical trace; never reconstructed provider prompts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerationMetadata"
+        "401":
+          description: Sign-in required
+        "404":
+          description: Creation not found
   /studio/creations/{id}:
     get:
       operationId: getCreation
@@ -385,6 +404,38 @@ components:
         createdAt: { type: string }
         mediaUrl: { type: [string, "null"] }
         error: { type: [string, "null"] }
+    ProviderRequestMetadata:
+      type: object
+      required: [stage, method, apiPath, model, requestedAt, state, payloadJson]
+      properties:
+        stage: { type: string, enum: [speech-planning, video-generation, video-status] }
+        method: { type: string, enum: [POST, GET] }
+        apiPath: { type: string }
+        model: { type: string }
+        requestedAt: { type: string }
+        state: { type: string, enum: [prepared, received, error] }
+        payloadJson: { type: [string, "null"] }
+        respondedAt: { type: [string, "null"] }
+        interactionId: { type: [string, "null"] }
+    GenerationMetadata:
+      type: object
+      required: [version, availability, recordedAt, originalInputJson, brandSnapshotJson, speechScript, requests, postProcessingJson, resultJson, limitations]
+      properties:
+        version: { type: integer }
+        availability: { type: string, enum: [recorded, legacy] }
+        recordedAt: { type: [string, "null"] }
+        originalInputJson: { type: string }
+        brandSnapshotJson: { type: [string, "null"] }
+        speechScript: { type: [string, "null"] }
+        requests:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProviderRequestMetadata"
+        postProcessingJson: { type: [string, "null"] }
+        resultJson: { type: [string, "null"] }
+        limitations:
+          type: array
+          items: { type: string }
     BrandInput:
       type: object
       required: [tagline, website, tone]

@@ -9,7 +9,8 @@ import {
   useListCreations,
   type Creation,
 } from '@workspace/api-client-react';
-import { Trash2, X } from 'lucide-react';
+import { FileText, Trash2, X } from 'lucide-react';
+import { GenerationMetadataDialog } from '@/components/generation-metadata-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { EmptyState, ErrorState, LoginNudge, PageHead } from '@/components/shell';
 import { CreationMedia, DownloadLink, StatusPill } from '@/components/creation-media';
@@ -21,6 +22,7 @@ export default function Biblioteca() {
   const { toast } = useToast();
   const [preview, setPreview] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<Creation | null>(null);
+  const [metaFor, setMetaFor] = useState<string | null>(null);
 
   const list = useListCreations({
     query: {
@@ -102,8 +104,13 @@ export default function Biblioteca() {
                   <br />
                   {fmtDate(c.createdAt)}
                 </p>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   {c.status === 'completed' ? <DownloadLink c={c} /> : <span />}
+                  {c.kind === 'video' && (
+                    <button onClick={() => setMetaFor(c.id)} data-testid={`button-metadata-${c.id}`} className="flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-bold hover:bg-muted">
+                      <FileText className="h-3.5 w-3.5" /> Detalle técnico
+                    </button>
+                  )}
                   <button onClick={() => setToDelete(c)} aria-label="Eliminar" data-testid={`button-delete-${c.id}`} className="rounded p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -131,6 +138,8 @@ export default function Biblioteca() {
           </div>
         </div>
       )}
+
+      <GenerationMetadataDialog creation={isAuthenticated ? items.find((c) => c.id === metaFor) ?? null : null} onClose={() => setMetaFor(null)} />
 
       {toDelete && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-sidebar/80 p-4" data-testid="modal-delete">

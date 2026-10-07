@@ -28,6 +28,7 @@ import type {
   CreativeTemplate,
   CreativeVariant,
   CreativeVariantInput,
+  GenerationMetadata,
   HealthStatus,
   LogoutSuccess,
   MobileTokenExchangeRequest,
@@ -830,6 +831,77 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       > => {
       return useMutation(getCreateCreationMutationOptions(options));
     }
+
+export const getGetCreationMetadataUrl = (id: string,) => {
+
+
+
+
+  return `/api/studio/creations/${id}/metadata`
+}
+
+export const getCreationMetadata = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<GenerationMetadata> => {
+
+  return customFetch<GenerationMetadata>(getGetCreationMetadataUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCreationMetadataQueryKey = (id: string,) => {
+    return [
+    `/api/studio/creations/${id}/metadata`
+    ] as const;
+    }
+
+
+export const getGetCreationMetadataQueryOptions = <TData = Awaited<ReturnType<typeof getCreationMetadata>>, TError = ErrorType<void>>(id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCreationMetadata>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCreationMetadataQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCreationMetadata>>> = ({ signal }) => getCreationMetadata(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: id !== null && id !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCreationMetadata>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCreationMetadataQueryResult = NonNullable<Awaited<ReturnType<typeof getCreationMetadata>>>
+export type GetCreationMetadataQueryError = ErrorType<void>
+
+
+
+export function useGetCreationMetadata<TData = Awaited<ReturnType<typeof getCreationMetadata>>, TError = ErrorType<void>>(
+ id: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCreationMetadata>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCreationMetadataQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetCreationUrl = (id: string,) => {
 
