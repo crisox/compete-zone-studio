@@ -201,6 +201,34 @@ export const CreateCreationResponse = zod.object({
 })
 
 
+export const GetCreationMetadataParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const GetCreationMetadataResponse = zod.object({
+  "version": zod.number().int(),
+  "availability": zod.enum(['recorded', 'legacy']),
+  "recordedAt": zod.string().nullable(),
+  "originalInputJson": zod.string(),
+  "brandSnapshotJson": zod.string().nullable(),
+  "speechScript": zod.string().nullable(),
+  "requests": zod.array(zod.object({
+  "stage": zod.enum(['speech-planning', 'video-generation', 'video-status']),
+  "method": zod.enum(['POST', 'GET']),
+  "apiPath": zod.string(),
+  "model": zod.string(),
+  "requestedAt": zod.string(),
+  "state": zod.enum(['prepared', 'received', 'error']),
+  "payloadJson": zod.string().nullable(),
+  "respondedAt": zod.string().nullish(),
+  "interactionId": zod.string().nullish()
+})),
+  "postProcessingJson": zod.string().nullable(),
+  "resultJson": zod.string().nullable(),
+  "limitations": zod.array(zod.string())
+})
+
+
 export const GetCreationParams = zod.object({
   "id": zod.coerce.string()
 })

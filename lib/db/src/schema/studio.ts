@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -14,6 +14,7 @@ export const creationsTable = pgTable("studio_creations", {
   model: text("model").notNull(),
   objectPath: text("object_path"),
   error: text("error"),
+  generationMetadata: jsonb("generation_metadata"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 export const insertCreationSchema = createInsertSchema(creationsTable).omit({ createdAt: true });
