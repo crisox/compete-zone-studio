@@ -46,6 +46,22 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/CreativeTemplate"
+  /studio/creative-variant:
+    post:
+      operationId: createCreativeVariant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreativeVariantInput"
+      responses:
+        "200":
+          description: A new visual approach for the same content, awaiting user approval
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreativeVariant"
   /studio/template-brief:
     get:
       operationId: getTemplateBrief
@@ -324,6 +340,22 @@ components:
         reason: { type: string }
         status: { type: string, enum: [suggested, saved, dismissed] }
         createdAt: { type: string }
+    CreativeVariantInput:
+      type: object
+      required: [title, prompt, audience, kind]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 100 }
+        prompt: { type: string, minLength: 10, maxLength: 4000 }
+        audience: { type: string, enum: [organizers, athletes] }
+        kind: { type: string, enum: [image, video] }
+        aspectRatio: { type: string, enum: ["9:16", "16:9", "1:1"] }
+    CreativeVariant:
+      type: object
+      required: [title, prompt, changes]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 100 }
+        prompt: { type: string, minLength: 10, maxLength: 4000 }
+        changes: { type: string, minLength: 10, maxLength: 1000 }
     CreationInput:
       type: object
       required: [title, prompt, kind, audience, aspectRatio]

@@ -11,13 +11,14 @@ import { templates, brandDefaults } from "../lib/brand";
 import { TEMPLATE_MODEL, productFeatures, planningPrompt, proposedBatchSchema, proposalJsonSchema, filterNewTemplates } from "../lib/templatePlanning";
 import { googleJson, sanitizeMessage } from "../lib/generation";
 import { describeColors } from "../lib/creativePrompt";
+import { normalizeTemplatePronunciation } from "../lib/templatePronunciation";
 
 const router: IRouter = Router();
 const active = new Set<string>();
 const cooldowns = new Map<string, number>();
 function serialize(row: TemplateIdeaRow) {
   const { ownerId: _ownerId, ...idea } = row;
-  return { ...idea, feature: productFeatures.find(feature => feature.id === row.feature)?.title ?? row.feature, createdAt: row.createdAt.toISOString() };
+  return { ...idea, prompt: normalizeTemplatePronunciation(row.prompt, row.kind), feature: productFeatures.find(feature => feature.id === row.feature)?.title ?? row.feature, createdAt: row.createdAt.toISOString() };
 }
 router.get("/studio/template-brief", (_req, res) => res.json(GetTemplateBriefResponse.parse({
   sourceUrl: "https://competezone.fit", model: TEMPLATE_MODEL, features: productFeatures,
@@ -59,7 +60,7 @@ router.post("/studio/template-ideas/generate", async (req, res): Promise<void> =
     if (!batch.success) throw new Error("Las propuestas no cumplen el formato esperado. No se guardaron plantillas.");
     const clean = batch.data.suggestions.map(idea => ({
       ...idea, title: describeColors(idea.title), description: describeColors(idea.description),
-      prompt: describeColors(idea.prompt), angle: describeColors(idea.angle), reason: describeColors(idea.reason),
+      prompt: normalizeTemplatePronunciation(describeColors(idea.prompt), idea.kind), angle: describeColors(idea.angle), reason: describeColors(idea.reason),
     }));
     const valid = filterNewTemplates(clean, context).filter(idea =>
       (parsed.data.audience === "all" || idea.audience === parsed.data.audience) &&

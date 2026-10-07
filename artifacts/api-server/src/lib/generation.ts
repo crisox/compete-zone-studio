@@ -8,6 +8,7 @@ import { ownedUpload } from "../routes/storage";
 import { logger } from "./logger";
 import { buildPrompt } from "./creativePrompt";
 import { addOfficialLogo, prepareLogo } from "./logoOverlay";
+import { speechPlanSchema, speechPlanJsonSchema, speechPlanPrompt, validatedSpeechText } from "./speechPlan";
 
 export const IMAGE_MODEL = "gemini-nano-banana-2.1";
 export const VIDEO_MODEL = "gemini-omni-1.1-flash";
@@ -79,7 +80,7 @@ export async function runGeneration(id: string, ownerId: string, input: Creation
       // Validate the artwork before making a paid provider request.
       await prepareLogo(officialLogo, 720, 1280);
     }
-    const prompt = buildPrompt(input, brand);
+    let prompt = buildPrompt(input, brand);
     let bytes: Buffer;
     let mime: string;
     if (input.kind === "image") {
@@ -96,6 +97,20 @@ export async function runGeneration(id: string, ownerId: string, input: Creation
       bytes = Buffer.from(image.data, "base64");
       mime = image.mimeType ?? "image/png";
     } else {
+      // Give Omni a single, validated short script instead of conflicting long
+      // narration and CTA instructions that may run past the video boundary.
+      const speechPayload = await googleJson("/interactions", "POST", {
+        model: "gemini-3.8-flash", store: false, stream: false, background: false,
+        input: speechPlanPrompt(input, brand),
+        response_format: { type: "text", mime_type: "application/json", schema: speechPlanJsonSchema },
+      });
+      const speechContent = [...(speechPayload.outputs ?? []), ...(speechPayload.steps ?? []).filter(step => step.type === "model_output").flatMap(step => step.content ?? [])];
+      const speechText = speechContent.filter(part => part.type === "text" && part.text).map(part => part.text).join("");
+      let speechJson: unknown;
+      try { speechJson = JSON.parse(speechText); } catch { throw new Error("No se pudo preparar una locución válida. No se solicitó el video para evitar un guion cortado."); }
+      const speech = speechPlanSchema.safeParse(speechJson);
+      if (!speech.success) throw new Error("No se pudo ajustar la locución al tiempo disponible. No se solicitó el video; probá una idea más breve.");
+      prompt = buildPrompt(input, brand, validatedSpeechText(speech.data.spokenWords));
       let payload: Interaction = await googleJson("/interactions", "POST", {
         model: VIDEO_MODEL,
         background: false,

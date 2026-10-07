@@ -37,6 +37,38 @@ export const GetTemplatesResponseItem = zod.object({
 export const GetTemplatesResponse = zod.array(GetTemplatesResponseItem)
 
 
+export const createCreativeVariantBodyTitleMax = 100;
+
+export const createCreativeVariantBodyPromptMin = 10;
+export const createCreativeVariantBodyPromptMax = 4000;
+
+
+
+export const CreateCreativeVariantBody = zod.object({
+  "title": zod.string().min(1).max(createCreativeVariantBodyTitleMax),
+  "prompt": zod.string().min(createCreativeVariantBodyPromptMin).max(createCreativeVariantBodyPromptMax),
+  "audience": zod.enum(['organizers', 'athletes']),
+  "kind": zod.enum(['image', 'video']),
+  "aspectRatio": zod.enum(['9:16', '16:9', '1:1']).optional()
+})
+
+export const createCreativeVariantResponseTitleMax = 100;
+
+export const createCreativeVariantResponsePromptMin = 10;
+export const createCreativeVariantResponsePromptMax = 4000;
+
+export const createCreativeVariantResponseChangesMin = 10;
+export const createCreativeVariantResponseChangesMax = 1000;
+
+
+
+export const CreateCreativeVariantResponse = zod.object({
+  "title": zod.string().min(1).max(createCreativeVariantResponseTitleMax),
+  "prompt": zod.string().min(createCreativeVariantResponsePromptMin).max(createCreativeVariantResponsePromptMax),
+  "changes": zod.string().min(createCreativeVariantResponseChangesMin).max(createCreativeVariantResponseChangesMax)
+})
+
+
 export const GetTemplateBriefResponse = zod.object({
   "sourceUrl": zod.string(),
   "model": zod.string(),
