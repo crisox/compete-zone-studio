@@ -24,6 +24,176 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /studio/status:
+    get:
+      operationId: getStudioStatus
+      responses:
+        "200":
+          description: Provider configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudioStatus"
+  /studio/templates:
+    get:
+      operationId: getTemplates
+      responses:
+        "200":
+          description: Brand-specific starting points
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CreativeTemplate"
+  /studio/creations:
+    get:
+      operationId: listCreations
+      responses:
+        "200":
+          description: Current user's history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Creation"
+    post:
+      operationId: createCreation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreationInput"
+      responses:
+        "202":
+          description: Generation started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Creation"
+  /studio/creations/{id}:
+    get:
+      operationId: getCreation
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Generation status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Creation"
+    delete:
+      operationId: deleteCreation
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "204":
+          description: Removed from history
+  /studio/brand:
+    get:
+      operationId: getBrand
+      responses:
+        "200":
+          description: Brand configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Brand"
+    put:
+      operationId: updateBrand
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BrandInput"
+      responses:
+        "200":
+          description: Saved brand
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Brand"
+  /studio/summary:
+    get:
+      operationId: getStudioSummary
+      responses:
+        "200":
+          description: Real creation counts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudioSummary"
+  /storage/uploads/request-url:
+    post:
+      operationId: requestUploadUrl
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadUrlRequest"
+      responses:
+        "200":
+          description: Upload URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadUrlResponse"
+  /auth/user:
+    get:
+      operationId: getCurrentAuthUser
+      responses:
+        "200":
+          description: Authentication state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUserEnvelope"
+  /login:
+    get:
+      operationId: beginBrowserLogin
+      responses:
+        "302": { description: Login redirect }
+  /callback:
+    get:
+      operationId: handleBrowserLoginCallback
+      responses:
+        "302": { description: Callback redirect }
+  /logout:
+    get:
+      operationId: logoutBrowserSession
+      responses:
+        "302": { description: Logout redirect }
+  /mobile-auth/token-exchange:
+    post:
+      operationId: exchangeMobileAuthorizationCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MobileTokenExchangeRequest"
+      responses:
+        "200":
+          description: Session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MobileTokenExchangeSuccess"
+  /mobile-auth/logout:
+    post:
+      operationId: logoutMobileSession
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogoutSuccess"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +203,130 @@ components:
           type: string
       required:
         - status
+    StudioStatus:
+      type: object
+      required: [configured, imageModel, videoModel, message]
+      properties:
+        configured: { type: boolean }
+        imageModel: { type: string }
+        videoModel: { type: string }
+        message: { type: string }
+    CreativeTemplate:
+      type: object
+      required: [id, title, description, prompt, audience, kind, category]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        description: { type: string }
+        prompt: { type: string }
+        audience: { type: string, enum: [organizers, athletes] }
+        kind: { type: string, enum: [image, video] }
+        category: { type: string }
+    CreationInput:
+      type: object
+      required: [title, prompt, kind, audience, aspectRatio]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 100 }
+        prompt: { type: string, minLength: 10, maxLength: 4000 }
+        kind: { type: string, enum: [image, video] }
+        audience: { type: string, enum: [organizers, athletes] }
+        aspectRatio: { type: string, enum: ["9:16", "16:9", "1:1"] }
+        referencePaths:
+          type: array
+          maxItems: 3
+          items: { type: string }
+        includeLogo: { type: boolean, default: false }
+    Creation:
+      type: object
+      required: [id, title, prompt, kind, audience, aspectRatio, status, model, createdAt]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        prompt: { type: string }
+        kind: { type: string, enum: [image, video] }
+        audience: { type: string, enum: [organizers, athletes] }
+        aspectRatio: { type: string }
+        status: { type: string, enum: [generating, completed, failed] }
+        model: { type: string }
+        createdAt: { type: string }
+        mediaUrl: { type: [string, "null"] }
+        error: { type: [string, "null"] }
+    BrandInput:
+      type: object
+      required: [tagline, website, tone]
+      properties:
+        tagline: { type: string, maxLength: 200 }
+        website: { type: string, maxLength: 200 }
+        tone: { type: string, maxLength: 1000 }
+        logoPath: { type: [string, "null"] }
+    Brand:
+      type: object
+      required: [name, tagline, website, tone, colors]
+      properties:
+        name: { type: string }
+        tagline: { type: string }
+        website: { type: string }
+        tone: { type: string }
+        logoPath: { type: [string, "null"] }
+        logoUrl: { type: [string, "null"] }
+        colors:
+          type: array
+          items: { type: string }
+    StudioSummary:
+      type: object
+      required: [images, videos, generating, total]
+      properties:
+        images: { type: integer }
+        videos: { type: integer }
+        generating: { type: integer }
+        total: { type: integer }
+    UploadUrlRequest:
+      type: object
+      required: [name, size, contentType]
+      properties:
+        name: { type: string, minLength: 1 }
+        size: { type: integer, minimum: 1, maximum: 5242880 }
+        contentType: { type: string, enum: ["image/png", "image/jpeg", "image/webp"] }
+    UploadUrlResponse:
+      type: object
+      required: [uploadURL, objectPath]
+      properties:
+        uploadURL: { type: string }
+        objectPath: { type: string }
+    AuthUser:
+      type: object
+      required: [id, email, firstName, lastName, profileImageUrl]
+      properties:
+        id: { type: string }
+        email: { type: [string, "null"] }
+        firstName: { type: [string, "null"] }
+        lastName: { type: [string, "null"] }
+        profileImageUrl: { type: [string, "null"] }
+    AuthUserEnvelope:
+      type: object
+      required: [user]
+      properties:
+        user:
+          oneOf:
+            - $ref: "#/components/schemas/AuthUser"
+            - { type: "null" }
+    MobileTokenExchangeRequest:
+      type: object
+      required: [code, code_verifier, redirect_uri, state]
+      properties:
+        code: { type: string, minLength: 1 }
+        code_verifier: { type: string, minLength: 1 }
+        redirect_uri: { type: string, minLength: 1 }
+        state: { type: string, minLength: 1 }
+        nonce: { type: string }
+    MobileTokenExchangeSuccess:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string }
+    LogoutSuccess:
+      type: object
+      required: [success]
+      properties:
+        success: { type: boolean }
 

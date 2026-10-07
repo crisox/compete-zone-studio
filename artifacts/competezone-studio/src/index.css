@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @plugin "@tailwindcss/typography";
@@ -431,3 +432,48 @@
     inset: -1px;
   }
 }
+
+:root {
+  --background: 210 33% 96%;
+  --foreground: 222 47% 11%;
+  --border: 214 25% 88%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --card-border: 214 25% 88%;
+  --sidebar: 222 47% 11%;
+  --sidebar-foreground: 210 30% 90%;
+  --sidebar-border: 222 35% 20%;
+  --sidebar-primary: 211 100% 35%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 222 35% 18%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-ring: 199 89% 48%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --popover-border: 214 25% 88%;
+  --primary: 211 100% 35%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 40% 92%;
+  --secondary-foreground: 222 47% 11%;
+  --muted: 210 35% 93%;
+  --muted-foreground: 215 16% 40%;
+  --accent: 74 100% 50%;
+  --accent-foreground: 222 47% 11%;
+  --destructive: 0 72% 45%;
+  --destructive-foreground: 0 0% 100%;
+  --input: 214 25% 80%;
+  --ring: 199 89% 48%;
+  --chart-1: 211 100% 35%;
+  --chart-2: 199 89% 48%;
+  --chart-3: 74 100% 50%;
+  --chart-4: 38 92% 50%;
+  --chart-5: 222 47% 11%;
+  --app-font-sans: 'Inter', sans-serif;
+}
+.dark { --background: 222 47% 8%; --foreground: 210 30% 95%; --border: 222 30% 20%; --card: 222 40% 12%; --card-foreground: 210 30% 95%; --card-border: 222 30% 20%; --input: 222 30% 28%; --muted: 222 30% 16%; --muted-foreground: 215 20% 65%; }
+@keyframes cz-rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes cz-sweep { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+.cz-rise { animation: cz-rise .5s cubic-bezier(.2,.7,.2,1) both; }
+.cz-sweep::after { content:''; position:absolute; inset:0; width:40%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent); animation: cz-sweep 1.6s infinite; }
+.cz-stripe { background-image: repeating-linear-gradient(-45deg, transparent 0 10px, rgba(255,255,255,.05) 10px 20px); }
+@media (prefers-reduced-motion: reduce) { .cz-rise, .cz-sweep::after { animation: none; } }

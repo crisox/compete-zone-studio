@@ -1,0 +1,1 @@
+- [Preview instrumentation](preview-instrumentation.md) — Replit's JSX metadata transform can reject explicit type arguments on component tags.
