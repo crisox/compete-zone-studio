@@ -1,5 +1,6 @@
 import { z } from "zod/v4";
-import { describeColors } from "./creativePrompt";
+import { describeColors, VIDEO_SPEECH_DIRECTION } from "./creativePrompt";
+import { PRONUNCIATION_DIRECTION, TEMPLATE_PROMPT_BUDGET } from "./templatePronunciation";
 
 export const TEMPLATE_MODEL = "gemini-3.8-flash";
 // Grounded in competezone.fit's public homepage, not its demonstration events.
@@ -13,7 +14,7 @@ export const productFeatures = [
 export const proposedTemplateSchema = z.object({
   title: z.string().min(3).max(100),
   description: z.string().min(10).max(500),
-  prompt: z.string().min(40).max(4000),
+  prompt: z.string().min(40).max(TEMPLATE_PROMPT_BUDGET),
   audience: z.enum(["organizers", "athletes"]),
   kind: z.enum(["image", "video"]),
   category: z.string().min(1).max(80),
@@ -40,11 +41,13 @@ export function planningPrompt(input: PlanningInput, context: TemplateContext[],
     `OBJETIVO DEL USUARIO: ${describeColors(input.focus.trim() || "Promocionar las características de la web con nuevos enfoques de alto impacto.")}`,
     "Cada propuesta debe vincular una característica real a un beneficio concreto, un gancho inicial fuerte y una única llamada a la acción.",
     "El campo prompt debe quedar listo para generar imagen o video: escena, composición, copy exacto, CTA y, si es video, secuencia breve con ambiente y locución.",
+    input.kind === "image" ? "" : `SOLO PARA LAS PROPUESTAS DE VIDEO: ${VIDEO_SPEECH_DIRECTION}`,
     "Usá fotografía/acción deportiva realista o motion graphics claros según la idea. No inventes pantallas de la web; pedí capturas reales como referencia cuando sean necesarias.",
     "La identidad visual es azul deportivo, azul noche, blanco, celeste y acentos verde lima; nunca escribas códigos de color en el prompt.",
     "El logo oficial se agrega después conservando la transparencia del archivo original, en la esquina superior izquierda. Dejá ese espacio limpio, sin fondos, placas ni recuadros para el logo.",
     "No solicites que el modelo escriba el nombre de la marca como título, palabra, tipografía o logo inventado. La marca se muestra solo con el archivo del logo original. Se admite el sitio competezone.fit escrito en el CTA.",
-    "Para video, la locución de CompeteZone o Compete Zone debe decir exactamente «compit son» y la de competezone.fit exactamente «compit son punto fit». Separá siempre el CTA visible «competezone.fit» del CTA hablado «compit son punto fit». No escribas las indicaciones fonéticas en pantalla ni en subtítulos.",
+    "Para video, la locución debe decir exactamente «compit son» y el sitio exactamente «compit son punto fit». Separá el CTA visible «competezone.fit» del CTA hablado «compit son punto fit». No escribas las indicaciones fonéticas en pantalla ni en subtítulos.",
+    PRONUNCIATION_DIRECTION,
     "reason debe explicar qué aporta esta idea frente a las existentes. angle debe describir el enfoque específico, no elogios genéricos ni garantías de viralidad.",
     "Devolvé únicamente el objeto JSON según el esquema de respuesta.",
   ].join("\n\n");

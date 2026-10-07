@@ -10,6 +10,7 @@ import {
 import { brandDefaults, templates } from "../lib/brand";
 import { IMAGE_MODEL, VIDEO_MODEL, runGeneration } from "../lib/generation";
 import { ownedUpload } from "./storage";
+import { normalizeTemplatePronunciation } from "../lib/templatePronunciation";
 
 const router: IRouter = Router();
 const starting = new Set<string>();
@@ -42,7 +43,9 @@ router.get("/studio/status", (_req, res) => {
 });
 router.get("/studio/templates", async (req, res) => {
   const saved = req.user ? await db.select().from(templateIdeasTable).where(and(eq(templateIdeasTable.ownerId, req.user.id), eq(templateIdeasTable.status, "saved"))).orderBy(desc(templateIdeasTable.createdAt)) : [];
-  res.json(GetTemplatesResponse.parse([...templates, ...saved]));
+  res.json(GetTemplatesResponse.parse([...templates, ...saved.map(row => ({
+    ...row, prompt: normalizeTemplatePronunciation(row.prompt, row.kind),
+  }))]));
 });
 router.get("/studio/brand", async (req, res) => res.json(GetBrandResponse.parse(await getBrandFor(req.user?.id))));
 router.put("/studio/brand", async (req, res): Promise<void> => {

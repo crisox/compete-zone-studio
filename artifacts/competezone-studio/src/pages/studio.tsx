@@ -18,6 +18,7 @@ import { ImagePlus, Info, Loader2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { PageHead } from '@/components/shell';
+import { CreativeVariantButton } from '@/components/creative-variant';
 import { CreationMedia, DownloadLink, StatusPill } from '@/components/creation-media';
 import { PREFILL_KEY, errMsg, useUploadFile, validateImage } from '@/lib/studio';
 
@@ -231,6 +232,19 @@ export default function Studio() {
             <textarea id="prompt" data-testid="input-prompt" rows={5} maxLength={4000} value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Describí la escena, el ambiente, el mensaje y qué tiene que decir..." className={cn(field, 'resize-y')} />
             <div className="mt-1 text-right text-[11px] text-muted-foreground">{prompt.length}/4000 · mínimo 10</div>
           </div>
+          <CreativeVariantButton
+            title={title}
+            prompt={prompt}
+            audience={audience}
+            kind={kind}
+            aspectRatio={ratio}
+            isAuthenticated={isAuthenticated}
+            login={login}
+            onApprove={(v) => {
+              setTitle(v.title);
+              setPrompt(v.prompt);
+            }}
+          />
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <span className={label}>Para quién</span>
@@ -284,6 +298,7 @@ export default function Studio() {
             <Info className="mt-0.5 h-4 w-4 shrink-0" />
             <p>
               La generación usa los modelos de Google y se factura según la cuota y el plan de la clave configurada en Google. CompeteZone no ve ni muestra tu saldo. Si el modelo no está habilitado, Google devuelve el error y lo vas a ver tal cual en la pieza.
+              {kind === 'video' && <span className="mt-1 block">Antes del video se prepara una locución de hasta 18 palabras. Se solicita una pieza de 10 s, con la voz terminada antes de 8,5 s y margen para el cierre.</span>}
             </p>
           </div>
 

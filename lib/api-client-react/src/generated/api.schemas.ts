@@ -136,6 +136,65 @@ export interface TemplateIdea {
   createdAt: string;
 }
 
+export type CreativeVariantInputAudience = typeof CreativeVariantInputAudience[keyof typeof CreativeVariantInputAudience];
+
+
+export const CreativeVariantInputAudience = {
+  organizers: 'organizers',
+  athletes: 'athletes',
+} as const;
+
+export type CreativeVariantInputKind = typeof CreativeVariantInputKind[keyof typeof CreativeVariantInputKind];
+
+
+export const CreativeVariantInputKind = {
+  image: 'image',
+  video: 'video',
+} as const;
+
+export type CreativeVariantInputAspectRatio = typeof CreativeVariantInputAspectRatio[keyof typeof CreativeVariantInputAspectRatio];
+
+
+export const CreativeVariantInputAspectRatio = {
+  '9:16': '9:16',
+  '16:9': '16:9',
+  '1:1': '1:1',
+} as const;
+
+export interface CreativeVariantInput {
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  title: string;
+  /**
+     * @minLength 10
+     * @maxLength 4000
+     */
+  prompt: string;
+  audience: CreativeVariantInputAudience;
+  kind: CreativeVariantInputKind;
+  aspectRatio?: CreativeVariantInputAspectRatio;
+}
+
+export interface CreativeVariant {
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  title: string;
+  /**
+     * @minLength 10
+     * @maxLength 4000
+     */
+  prompt: string;
+  /**
+     * @minLength 10
+     * @maxLength 1000
+     */
+  changes: string;
+}
+
 export type CreationInputKind = typeof CreationInputKind[keyof typeof CreationInputKind];
 
 
