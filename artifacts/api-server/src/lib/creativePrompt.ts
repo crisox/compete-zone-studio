@@ -38,7 +38,7 @@ export function buildPrompt(input: CreationInput, brand: StudioBrand) {
     "Personas adultas; esfuerzo, compañerismo y participación. Sin testimonios, datos, eventos ni interfaces inventadas.",
     video ? "Priorizá acción deportiva natural y cámara coherente con la idea. Audio con ambiente real, música original sutil y voz clara en español rioplatense solo si la idea pide narración. No narres las instrucciones, la paleta ni las especificaciones." : "Composición clara y deportiva, tipografía sans serif legible.",
     input.referencePaths?.length ? "Las fotos adjuntas son referencias del sujeto y del entorno. Conservá sus detalles relevantes; no las trates como primer y último fotograma, ni como láminas para mostrar." : "",
-    input.includeLogo ? "La identidad de marca se muestra exclusivamente con el archivo del logo oficial sobre fondo blanco, agregado en posproducción. Dejá libre la esquina superior izquierda durante todo el video. No dibujes, recrees ni reemplaces ese logo." : "No inventes ni recrees el logo oficial.",
+    input.includeLogo ? "La identidad de marca se muestra exclusivamente con el archivo del logo oficial, conservando su transparencia, agregado en posproducción. Dejá libre la esquina superior izquierda durante todo el video. No generes fondos, recuadros ni placas para el logo. No dibujes, recrees ni reemplaces ese logo." : "No inventes ni recrees el logo oficial.",
     "",
     "TEXTO VISIBLE Y LOCUCIÓN",
     "Mostrá solamente los mensajes publicitarios pedidos en la idea y un único llamado a la acción. Escribí el copy exactamente y con buena ortografía.",

@@ -31,14 +31,18 @@ test("Omni receives color descriptions, never hexadecimal tokens", () => {
 });
 
 const artwork = (color) => sharp(Buffer.from(
-  `<svg width="360" height="70"><rect x="20" y="15" width="320" height="40" fill="${color}"/></svg>`,
+  `<svg width="360" height="70"><rect x="20" y="15" width="320" height="40" rx="10" fill="${color}"/></svg>`,
 )).png().toBuffer();
 
-test("official artwork always gets a white plate regardless of its colors", async () => {
+test("official artwork retains transparency without an added background", async () => {
   for (const color of ["black", "white"]) {
-    const { plate } = await prepareLogo(await artwork(color), 720, 1280);
-    const { data } = await sharp(plate).raw().toBuffer({ resolveWithObject: true });
-    assert.equal(data[0], 255);
+    const { overlay } = await prepareLogo(await artwork(color), 720, 1280);
+    const { data, info } = await sharp(overlay).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    assert.equal(info.channels, 4);
+    assert.equal(data[3], 0);
+    const center = (Math.floor(info.height / 2) * info.width + Math.floor(info.width / 2)) * 4;
+    assert.equal(data[center], color === "black" ? 0 : 255);
+    assert.equal(data[center + 3], 255);
   }
 });
 
@@ -66,11 +70,11 @@ test("empty transparent artwork cannot silently produce a logo-less creation", a
   await assert.rejects(prepareLogo(empty, 720, 1280));
 });
 
-test("image output includes the original artwork with visible contrast", async () => {
+test("image output shows original background through the transparent logo corners", async () => {
   const source = await sharp({ create: { width: 720, height: 1280, channels: 3, background: "#0F172A" } }).png().toBuffer();
   const bytes = await addOfficialLogo(source, await artwork("black"), "image");
-  const { data } = await sharp(bytes).extract({ left: 34, top: 60, width: 1, height: 1 }).raw().toBuffer({ resolveWithObject: true });
-  assert.equal(data[0], 255);
+  const { data } = await sharp(bytes).extract({ left: 32, top: 58, width: 1, height: 1 }).raw().toBuffer({ resolveWithObject: true });
+  assert.deepEqual([...data.slice(0, 3)], [15, 23, 42]);
 });
 
 test("video logo stays visible through the last frame and preserves audio and duration", async () => {
@@ -93,8 +97,10 @@ test("video logo stays visible through the last frame and preserves audio and du
     for (const seconds of ["0", "1", "1.9"]) {
       const png = join(dir, `frame-${seconds}.png`);
       await exec("ffmpeg", ["-v", "error", "-ss", seconds, "-i", output, "-frames:v", "1", "-y", png]);
-      const { data } = await sharp(png).extract({ left: 18, top: 32, width: 1, height: 1 }).raw().toBuffer({ resolveWithObject: true });
-      assert.ok(data[0] > 220, `logo contrast plate missing at ${seconds}s`);
+      const { data } = await sharp(png).extract({ left: 16, top: 29, width: 1, height: 1 }).raw().toBuffer({ resolveWithObject: true });
+      assert.ok(data[0] < 40 && data[2] > 60, `transparent corner replaced by a box at ${seconds}s`);
+      const center = await sharp(png).extract({ left: 81, top: 37, width: 1, height: 1 }).raw().toBuffer();
+      assert.ok(center[2] < 35, `original logo missing at ${seconds}s`);
     }
   } finally {
     await rm(dir, { recursive: true, force: true });
