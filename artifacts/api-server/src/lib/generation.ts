@@ -1,10 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { mkdtemp, writeFile, readFile, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { execFile } from "node:child_process";
-import { promisify } from "node:util";
-import sharp from "sharp";
 import { eq } from "drizzle-orm";
 import { db, creationsTable } from "@workspace/db";
 import type { CreationInput } from "@workspace/api-zod";
@@ -12,12 +6,13 @@ import type { StudioBrand } from "./brand";
 import { objectStorageClient, ObjectStorageService } from "./objectStorage";
 import { ownedUpload } from "../routes/storage";
 import { logger } from "./logger";
+import { buildPrompt } from "./creativePrompt";
+import { addOfficialLogo, prepareLogo } from "./logoOverlay";
 
 export const IMAGE_MODEL = "gemini-nano-banana-2.1";
 export const VIDEO_MODEL = "gemini-omni-1.1-flash";
 const googleBase = "https://generativelanguage.googleapis.com/v1beta";
 const storage = new ObjectStorageService();
-const exec = promisify(execFile);
 
 interface ProviderOutput {
   type?: string;
@@ -62,48 +57,6 @@ async function googleJson(path: string, method: "POST" | "GET", body?: unknown) 
   return payload;
 }
 
-function buildPrompt(input: CreationInput, brand: StudioBrand) {
-  return [
-    "Creá contenido audiovisual de marketing para CompeteZone, plataforma que conecta atletas y organizaciones para descubrir competencias, gestionar inscripciones y compartir resultados.",
-    `Público: ${input.audience === "organizers" ? "organizadores, boxes, gimnasios, clubes y federaciones de Uruguay" : "atletas y equipos de CrossFit, entrenamiento funcional, HYROX y running"}.`,
-    `Voz: ${brand.tone}. Promesa: ${brand.tagline}. Website: ${brand.website}.`,
-    "Identidad: azul #0053B4, fondo oscuro #0F172A, blanco #FFFFFF y apoyo #0EA5E9. Acento #A8FF00 moderado. Tipografía legible estilo Inter.",
-    "Mostrá esfuerzo, compañerismo y participación. No inventes testimonios, datos, resultados, eventos ni interfaces de la app. Las personas representadas deben ser adultas.",
-    "En pantalla se escribe CompeteZone. En narración se pronuncia «Compit Zone». Usá voseo, un único CTA claro y textos legibles.",
-    "No generes ni recrees el logo oficial: se agrega posteriormente si el usuario lo solicita. No agregues marcas ficticias.",
-    input.kind === "video" ? "Generá un video corto con audio, sonidos naturales y narración rioplatense si la idea lo pide. No copies música comercial. Resolución 720p." : "Generá una imagen final para redes sociales.",
-    `IDEA DEL USUARIO:\n${input.prompt}`,
-  ].join("\n");
-}
-
-async function addOfficialLogo(bytes: Buffer, logo: Buffer, kind: string) {
-  if (kind === "image") {
-    const meta = await sharp(bytes).metadata();
-    const width = meta.width ?? 1024;
-    const height = meta.height ?? 1024;
-    const margin = Math.round(width * .045);
-    const resized = await sharp(logo).resize({ width: Math.round(width * .22), height: Math.round(height * .12), fit: "inside" }).png().toBuffer();
-    const logoMeta = await sharp(resized).metadata();
-    return sharp(bytes).composite([{ input: resized, left: margin, top: height - (logoMeta.height ?? 100) - margin }]).png().toBuffer();
-  }
-  const dir = await mkdtemp(join(tmpdir(), "competezone-"));
-  try {
-    const input = join(dir, "input.mp4"), logoFile = join(dir, "logo.png"), output = join(dir, "output.mp4");
-    await writeFile(input, bytes);
-    const probe = await exec("ffprobe", ["-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height", "-of", "json", input], { timeout: 30_000 });
-    const dimensions = JSON.parse(probe.stdout).streams?.[0] as { width: number; height: number };
-    if (!dimensions?.width || !dimensions.height) throw new Error("No se pudo leer el tamaño del video.");
-    await writeFile(logoFile, await sharp(logo).resize({ width: Math.round(dimensions.width * .22), height: Math.round(dimensions.height * .12), fit: "inside" }).png().toBuffer());
-    // Overlay the original file, never ask the model to redraw an official logo.
-    await exec("ffmpeg", ["-y", "-i", input, "-i", logoFile, "-filter_complex",
-      "[0:v][1:v]overlay=x=main_w*0.045:y=main_h-overlay_h-main_w*0.045:format=auto[v]",
-      "-map", "[v]", "-map", "0:a?", "-c:v", "libx264", "-preset", "fast", "-crf", "20", "-c:a", "copy", "-movflags", "+faststart", output], { timeout: 120_000, maxBuffer: 1024 * 1024 });
-    return await readFile(output);
-  } finally {
-    await rm(dir, { recursive: true, force: true });
-  }
-}
-
 async function saveGenerated(bytes: Buffer, mime: string) {
   const path = `/objects/generated/${randomUUID()}`;
   const full = `${storage.getPrivateObjectDir()}/${path.slice("/objects/".length)}`;
@@ -118,6 +71,13 @@ async function saveGenerated(bytes: Buffer, mime: string) {
 export async function runGeneration(id: string, ownerId: string, input: CreationInput, brand: StudioBrand) {
   try {
     const refs = await Promise.all((input.referencePaths ?? []).map(path => ownedUpload(path, ownerId)));
+    let officialLogo: Buffer | undefined;
+    if (input.includeLogo) {
+      if (!brand.logoPath) throw new Error("Cargá y guardá el logo oficial en Marca antes de generar.");
+      officialLogo = (await ownedUpload(brand.logoPath, ownerId)).bytes;
+      // Validate the artwork before making a paid provider request.
+      await prepareLogo(officialLogo, 720, 1280);
+    }
     const prompt = buildPrompt(input, brand);
     let bytes: Buffer;
     let mime: string;
@@ -137,11 +97,15 @@ export async function runGeneration(id: string, ownerId: string, input: Creation
     } else {
       let payload: Interaction = await googleJson("/interactions", "POST", {
         model: VIDEO_MODEL,
+        background: false,
+        store: false,
+        stream: false,
         input: [
           ...refs.map(ref => ({ type: "image", data: ref.bytes.toString("base64"), mime_type: ref.mime })),
           { type: "text", text: prompt },
         ],
         response_format: { type: "video", aspect_ratio: input.aspectRatio, resolution: "720p" },
+        generation_config: { video_config: { task: refs.length ? "reference_to_video" : "text_to_video" } },
       });
       const deadline = Date.now() + 300_000;
       while (payload.id && ["in_progress", "running", "pending"].includes(payload.status ?? "") && Date.now() < deadline) {
@@ -166,9 +130,9 @@ export async function runGeneration(id: string, ownerId: string, input: Creation
       mime = "video/mp4";
     }
     if (!bytes.length || bytes.length > 150 * 1024 * 1024) throw new Error("El archivo generado está vacío o supera el tamaño admitido.");
-    if (input.includeLogo && brand.logoPath) {
-      const logo = await ownedUpload(brand.logoPath, ownerId);
-      bytes = await addOfficialLogo(bytes, logo.bytes, input.kind);
+    if (input.includeLogo) {
+      if (!officialLogo) throw new Error("No se encontró el logo solicitado. No se guardará una creación sin logo.");
+      bytes = await addOfficialLogo(bytes, officialLogo, input.kind);
       if (input.kind === "image") mime = "image/png";
     }
     const objectPath = await saveGenerated(bytes, mime);
