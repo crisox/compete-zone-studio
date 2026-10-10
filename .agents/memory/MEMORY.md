@@ -1,0 +1,5 @@
+- [Preview instrumentation](preview-instrumentation.md) — Replit's JSX metadata transform can reject explicit type arguments on component tags.
+- [Omni prompt leakage](omni-prompt-leakage.md) — palette codes can appear on background signage as well as title cards; describe colors in words.
+- [Brand promotion rules](brand-promotion-rules.md) — preserve logo transparency without added backgrounds or brand-name text; feature-led templates informed by the existing library.
+- [Omni speech timing](omni-speech-timing.md) — complete short voice script includes spoken CTA; padding cannot recover clipped words; no unsupported duration fields.
+- [Generation provenance](generation-provenance.md) — save per-run requests; don't reconstruct historical payloads with current brand or prompt settings; owner-only, no credentials.

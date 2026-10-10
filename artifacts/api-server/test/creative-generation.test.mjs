@@ -1,0 +1,108 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
+import sharp from "sharp";
+import { buildPrompt, describeColors, withoutBrandTitle } from "../src/lib/creativePrompt.ts";
+import { prepareLogo, addOfficialLogo } from "../src/lib/logoOverlay.ts";
+
+const exec = promisify(execFile);
+const brand = {
+  name: "CompeteZone", tagline: "Menos vueltas. Más competencia.",
+  website: "competezone.fit", tone: "Rioplatense. Paleta #0F172A y #0EA5E9.",
+  colors: ["#0053B4"], logoPath: "/objects/uploads/example", logoUrl: "/api/example",
+};
+const input = {
+  title: "Prueba", prompt: "Atletas con fondo #0F172A, acentos #0EA5E9 y CTA «Competí».",
+  kind: "video", audience: "athletes", aspectRatio: "9:16", includeLogo: true,
+};
+
+test("Omni receives color descriptions, never hexadecimal tokens", () => {
+  const prompt = buildPrompt(input, brand);
+  assert.doesNotMatch(prompt, /#[a-f\d]{3,8}\b/i);
+  assert.match(prompt, /azul noche/);
+  assert.match(prompt, /celeste luminoso/);
+  assert.match(prompt, /«Competí»/);
+  assert.match(prompt, /carteles, banderas/);
+  assert.doesNotMatch(describeColors("#ABC #12345678 #abcd #0053B4"), /#/);
+});
+
+const artwork = (color) => sharp(Buffer.from(
+  `<svg width="360" height="70"><rect x="20" y="15" width="320" height="40" rx="10" fill="${color}"/></svg>`,
+)).png().toBuffer();
+
+test("official artwork retains transparency without an added background", async () => {
+  for (const color of ["black", "white"]) {
+    const { overlay } = await prepareLogo(await artwork(color), 720, 1280);
+    const { data, info } = await sharp(overlay).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    assert.equal(info.channels, 4);
+    assert.equal(data[3], 0);
+    const center = (Math.floor(info.height / 2) * info.width + Math.floor(info.width / 2)) * 4;
+    assert.equal(data[center], color === "black" ? 0 : 255);
+    assert.equal(data[center + 3], 255);
+  }
+});
+
+test("brand title instructions are removed but the CTA domain is preserved", () => {
+  assert.equal(withoutBrandTitle("CompeteZone Compete Zone Compete-Zone competezone.fit"), "competezone.fit");
+  const prompt = buildPrompt({ ...input, prompt: "Mostrá «CompeteZone» como título. CTA competezone.fit." }, brand);
+  assert.doesNotMatch(prompt, /Nombre escrito/);
+  assert.match(prompt, /Nunca escribas el nombre de la marca/);
+  assert.match(prompt, /competezone\.fit/);
+  assert.doesNotMatch(prompt.split("IDEA CREATIVA")[1].split("DIRECCIÓN VISUAL")[0], /competezone(?!\.fit)/i);
+});
+
+test("video narration uses exact brand and domain pronunciation, without changing visible URL", () => {
+  const prompt = buildPrompt(input, brand);
+  assert.match(prompt, /se dice exactamente «compit son»/);
+  assert.match(prompt, /se dice exactamente «compit son punto fit»/);
+  assert.match(prompt, /incluso si la idea o una plantilla usan otra pronunciación/);
+  assert.match(prompt, /nunca las escribas en pantalla ni en subtítulos/);
+  assert.match(prompt, /dirección web visible debe seguir siendo competezone\.fit/);
+  assert.doesNotMatch(prompt, /Compit Zone/);
+});
+
+test("empty transparent artwork cannot silently produce a logo-less creation", async () => {
+  const empty = await sharp({ create: { width: 80, height: 20, channels: 4, background: "#00000000" } }).png().toBuffer();
+  await assert.rejects(prepareLogo(empty, 720, 1280));
+});
+
+test("image output shows original background through the transparent logo corners", async () => {
+  const source = await sharp({ create: { width: 720, height: 1280, channels: 3, background: "#0F172A" } }).png().toBuffer();
+  const bytes = await addOfficialLogo(source, await artwork("black"), "image");
+  const { data } = await sharp(bytes).extract({ left: 32, top: 58, width: 1, height: 1 }).raw().toBuffer({ resolveWithObject: true });
+  assert.deepEqual([...data.slice(0, 3)], [15, 23, 42]);
+});
+
+test("video logo stays visible through the last frame and preserves audio and duration", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "cz-overlay-test-"));
+  try {
+    const source = join(dir, "source.mp4");
+    await exec("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y",
+      "-f", "lavfi", "-i", "color=c=navy:s=360x640:r=24:d=2",
+      "-f", "lavfi", "-i", "sine=frequency=440:duration=2",
+      "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest", source]);
+    const { writeFile } = await import("node:fs/promises");
+    const output = join(dir, "output.mp4");
+    await writeFile(output, await addOfficialLogo(await readFile(source), await artwork("black"), "video"));
+    const probe = async (path) => JSON.parse((await exec("ffprobe", ["-v", "error", "-show_entries", "format=duration:stream=codec_type", "-of", "json", path])).stdout);
+    const before = await probe(source), after = await probe(output);
+    assert.ok(after.streams.some((stream) => stream.codec_type === "audio"));
+    assert.ok(Math.abs(Number(before.format.duration) - Number(after.format.duration)) < .05);
+    const audioHash = async (path) => (await exec("ffmpeg", ["-v", "error", "-i", path, "-map", "0:a:0", "-c", "copy", "-f", "hash", "-"])).stdout;
+    assert.equal(await audioHash(source), await audioHash(output));
+    for (const seconds of ["0", "1", "1.9"]) {
+      const png = join(dir, `frame-${seconds}.png`);
+      await exec("ffmpeg", ["-v", "error", "-ss", seconds, "-i", output, "-frames:v", "1", "-y", png]);
+      const { data } = await sharp(png).extract({ left: 16, top: 29, width: 1, height: 1 }).raw().toBuffer({ resolveWithObject: true });
+      assert.ok(data[0] < 40 && data[2] > 60, `transparent corner replaced by a box at ${seconds}s`);
+      const center = await sharp(png).extract({ left: 81, top: 37, width: 1, height: 1 }).raw().toBuffer();
+      assert.ok(center[2] < 35, `original logo missing at ${seconds}s`);
+    }
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});

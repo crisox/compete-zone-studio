@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "CompeteZone Studio"
+description = "Estudio de contenido audiovisual para CompeteZone: imágenes con Nano Banana y videos con audio con Gemini Omni, referencias de marca, vista previa y descargas."
+version = "1.0.0"
+id = "artifacts/competezone-studio"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19706
+
+[services.development]
+run = "pnpm --filter @workspace/competezone-studio run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/competezone-studio", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/competezone-studio/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19706"
+BASE_PATH = "/"

@@ -1,0 +1,517 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /studio/status:
+    get:
+      operationId: getStudioStatus
+      responses:
+        "200":
+          description: Provider configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudioStatus"
+  /studio/templates:
+    get:
+      operationId: getTemplates
+      responses:
+        "200":
+          description: Brand-specific starting points
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CreativeTemplate"
+  /studio/creative-variant:
+    post:
+      operationId: createCreativeVariant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreativeVariantInput"
+      responses:
+        "200":
+          description: A new visual approach for the same content, awaiting user approval
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreativeVariant"
+  /studio/template-brief:
+    get:
+      operationId: getTemplateBrief
+      responses:
+        "200":
+          description: Verified product features for creative planning
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateBrief"
+  /studio/template-ideas:
+    get:
+      operationId: listTemplateIdeas
+      responses:
+        "200":
+          description: Private proposed and saved template ideas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TemplateIdea"
+  /studio/template-ideas/generate:
+    post:
+      operationId: generateTemplateIdeas
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TemplateIdeaGenerationInput"
+      responses:
+        "200":
+          description: New proposals, persisted for review
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TemplateIdea"
+  /studio/template-ideas/{id}:
+    patch:
+      operationId: updateTemplateIdea
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TemplateIdeaUpdate"
+      responses:
+        "200":
+          description: Saved to templates or dismissed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TemplateIdea"
+  /studio/creations:
+    get:
+      operationId: listCreations
+      responses:
+        "200":
+          description: Current user's history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Creation"
+    post:
+      operationId: createCreation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreationInput"
+      responses:
+        "202":
+          description: Generation started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Creation"
+  /studio/creations/{id}/metadata:
+    get:
+      operationId: getCreationMetadata
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Owner-only technical trace; never reconstructed provider prompts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerationMetadata"
+        "401":
+          description: Sign-in required
+        "404":
+          description: Creation not found
+  /studio/creations/{id}:
+    get:
+      operationId: getCreation
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: Generation status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Creation"
+    delete:
+      operationId: deleteCreation
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        "204":
+          description: Removed from history
+  /studio/brand:
+    get:
+      operationId: getBrand
+      responses:
+        "200":
+          description: Brand configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Brand"
+    put:
+      operationId: updateBrand
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BrandInput"
+      responses:
+        "200":
+          description: Saved brand
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Brand"
+  /studio/summary:
+    get:
+      operationId: getStudioSummary
+      responses:
+        "200":
+          description: Real creation counts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StudioSummary"
+  /storage/uploads/request-url:
+    post:
+      operationId: requestUploadUrl
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadUrlRequest"
+      responses:
+        "200":
+          description: Upload URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadUrlResponse"
+  /auth/user:
+    get:
+      operationId: getCurrentAuthUser
+      responses:
+        "200":
+          description: Authentication state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthUserEnvelope"
+  /login:
+    get:
+      operationId: beginBrowserLogin
+      responses:
+        "302": { description: Login redirect }
+  /callback:
+    get:
+      operationId: handleBrowserLoginCallback
+      responses:
+        "302": { description: Callback redirect }
+  /logout:
+    get:
+      operationId: logoutBrowserSession
+      responses:
+        "302": { description: Logout redirect }
+  /mobile-auth/token-exchange:
+    post:
+      operationId: exchangeMobileAuthorizationCode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MobileTokenExchangeRequest"
+      responses:
+        "200":
+          description: Session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MobileTokenExchangeSuccess"
+  /mobile-auth/logout:
+    post:
+      operationId: logoutMobileSession
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LogoutSuccess"
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    StudioStatus:
+      type: object
+      required: [configured, imageModel, videoModel, message]
+      properties:
+        configured: { type: boolean }
+        imageModel: { type: string }
+        videoModel: { type: string }
+        message: { type: string }
+    CreativeTemplate:
+      type: object
+      required: [id, title, description, prompt, audience, kind, category]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        description: { type: string }
+        prompt: { type: string }
+        audience: { type: string, enum: [organizers, athletes] }
+        kind: { type: string, enum: [image, video] }
+        category: { type: string }
+    TemplateBrief:
+      type: object
+      required: [sourceUrl, model, features]
+      properties:
+        sourceUrl: { type: string }
+        model: { type: string }
+        features:
+          type: array
+          items:
+            type: object
+            required: [id, title, description]
+            properties:
+              id: { type: string }
+              title: { type: string }
+              description: { type: string }
+    TemplateIdeaGenerationInput:
+      type: object
+      required: [focus, audience, kind, count]
+      properties:
+        focus: { type: string, maxLength: 1500 }
+        audience: { type: string, enum: [all, organizers, athletes] }
+        kind: { type: string, enum: [mixed, image, video] }
+        count: { type: integer, minimum: 1, maximum: 6 }
+    TemplateIdeaUpdate:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [saved, dismissed] }
+    TemplateIdea:
+      type: object
+      required: [id, title, description, prompt, audience, kind, category, feature, angle, reason, status, createdAt]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        description: { type: string }
+        prompt: { type: string }
+        audience: { type: string, enum: [organizers, athletes] }
+        kind: { type: string, enum: [image, video] }
+        category: { type: string }
+        feature: { type: string }
+        angle: { type: string }
+        reason: { type: string }
+        status: { type: string, enum: [suggested, saved, dismissed] }
+        createdAt: { type: string }
+    CreativeVariantInput:
+      type: object
+      required: [title, prompt, audience, kind]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 100 }
+        prompt: { type: string, minLength: 10, maxLength: 4000 }
+        audience: { type: string, enum: [organizers, athletes] }
+        kind: { type: string, enum: [image, video] }
+        aspectRatio: { type: string, enum: ["9:16", "16:9", "1:1"] }
+    CreativeVariant:
+      type: object
+      required: [title, prompt, changes]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 100 }
+        prompt: { type: string, minLength: 10, maxLength: 4000 }
+        changes: { type: string, minLength: 10, maxLength: 1000 }
+    CreationInput:
+      type: object
+      required: [title, prompt, kind, audience, aspectRatio]
+      properties:
+        title: { type: string, minLength: 1, maxLength: 100 }
+        prompt: { type: string, minLength: 10, maxLength: 4000 }
+        kind: { type: string, enum: [image, video] }
+        audience: { type: string, enum: [organizers, athletes] }
+        aspectRatio: { type: string, enum: ["9:16", "16:9", "1:1"] }
+        referencePaths:
+          type: array
+          maxItems: 3
+          items: { type: string }
+        includeLogo: { type: boolean, default: false }
+    Creation:
+      type: object
+      required: [id, title, prompt, kind, audience, aspectRatio, status, model, createdAt]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        prompt: { type: string }
+        kind: { type: string, enum: [image, video] }
+        audience: { type: string, enum: [organizers, athletes] }
+        aspectRatio: { type: string }
+        status: { type: string, enum: [generating, completed, failed] }
+        model: { type: string }
+        createdAt: { type: string }
+        mediaUrl: { type: [string, "null"] }
+        error: { type: [string, "null"] }
+    ProviderRequestMetadata:
+      type: object
+      required: [stage, method, apiPath, model, requestedAt, state, payloadJson]
+      properties:
+        stage: { type: string, enum: [speech-planning, video-generation, video-status] }
+        method: { type: string, enum: [POST, GET] }
+        apiPath: { type: string }
+        model: { type: string }
+        requestedAt: { type: string }
+        state: { type: string, enum: [prepared, received, error] }
+        payloadJson: { type: [string, "null"] }
+        respondedAt: { type: [string, "null"] }
+        interactionId: { type: [string, "null"] }
+    GenerationMetadata:
+      type: object
+      required: [version, availability, recordedAt, originalInputJson, brandSnapshotJson, speechScript, requests, postProcessingJson, resultJson, limitations]
+      properties:
+        version: { type: integer }
+        availability: { type: string, enum: [recorded, legacy] }
+        recordedAt: { type: [string, "null"] }
+        originalInputJson: { type: string }
+        brandSnapshotJson: { type: [string, "null"] }
+        speechScript: { type: [string, "null"] }
+        requests:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProviderRequestMetadata"
+        postProcessingJson: { type: [string, "null"] }
+        resultJson: { type: [string, "null"] }
+        limitations:
+          type: array
+          items: { type: string }
+    BrandInput:
+      type: object
+      required: [tagline, website, tone]
+      properties:
+        tagline: { type: string, maxLength: 200 }
+        website: { type: string, maxLength: 200 }
+        tone: { type: string, maxLength: 1000 }
+        logoPath: { type: [string, "null"] }
+    Brand:
+      type: object
+      required: [name, tagline, website, tone, colors]
+      properties:
+        name: { type: string }
+        tagline: { type: string }
+        website: { type: string }
+        tone: { type: string }
+        logoPath: { type: [string, "null"] }
+        logoUrl: { type: [string, "null"] }
+        colors:
+          type: array
+          items: { type: string }
+    StudioSummary:
+      type: object
+      required: [images, videos, generating, total]
+      properties:
+        images: { type: integer }
+        videos: { type: integer }
+        generating: { type: integer }
+        total: { type: integer }
+    UploadUrlRequest:
+      type: object
+      required: [name, size, contentType]
+      properties:
+        name: { type: string, minLength: 1 }
+        size: { type: integer, minimum: 1, maximum: 5242880 }
+        contentType: { type: string, enum: ["image/png", "image/jpeg", "image/webp"] }
+    UploadUrlResponse:
+      type: object
+      required: [uploadURL, objectPath]
+      properties:
+        uploadURL: { type: string }
+        objectPath: { type: string }
+    AuthUser:
+      type: object
+      required: [id, email, firstName, lastName, profileImageUrl]
+      properties:
+        id: { type: string }
+        email: { type: [string, "null"] }
+        firstName: { type: [string, "null"] }
+        lastName: { type: [string, "null"] }
+        profileImageUrl: { type: [string, "null"] }
+    AuthUserEnvelope:
+      type: object
+      required: [user]
+      properties:
+        user:
+          oneOf:
+            - $ref: "#/components/schemas/AuthUser"
+            - { type: "null" }
+    MobileTokenExchangeRequest:
+      type: object
+      required: [code, code_verifier, redirect_uri, state]
+      properties:
+        code: { type: string, minLength: 1 }
+        code_verifier: { type: string, minLength: 1 }
+        redirect_uri: { type: string, minLength: 1 }
+        state: { type: string, minLength: 1 }
+        nonce: { type: string }
+    MobileTokenExchangeSuccess:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string }
+    LogoutSuccess:
+      type: object
+      required: [success]
+      properties:
+        success: { type: boolean }
+

@@ -1,0 +1,43 @@
+CompeteZone conecta atletas y organizaciones para que las competencias deportivas sean más fáciles de descubrir, organizar y vivir.
+Esta es una propuesta de identidad de marca basada en el producto, sus logos y los colores actuales, lista para usar en contenidos y videos.
+Propósito
+Facilitar el encuentro entre quienes organizan competencias y quienes quieren participar.
+Promesa de marca
+Menos vueltas. Más competencia.
+Centralizar la información, las inscripciones y los resultados para que los organizadores puedan concentrarse en la experiencia deportiva.
+Público
+- Principal: organizadores de competencias, boxes, gimnasios, clubes y federaciones de Uruguay.
+- Secundario: atletas y equipos de CrossFit, entrenamiento funcional, HYROX, running y disciplinas afines.
+Personalidad
+Deportiva, cercana, clara y resolutiva. Transmite energía y comunidad, acompañadas de organización y confianza.
+Voz y tono
+Español rioplatense, con voseo y frases simples: “Publicá”, “Organizá”, “Inscribite”, “Competí”.
+Hablar desde situaciones reales y beneficios concretos. Usar humor cuando genere identificación. Evitar exageraciones, tecnicismos, promesas de viralidad y testimonios inventados.
+Ejemplo:
+“Tu próxima competencia merece más atención que tus planillas.”
+Mensajes centrales
+Para organizadores	Para atletas
+Centralizá tu competencia.	Encontrá tu próximo desafío.
+Menos coordinación manual, más tiempo para el evento.	Consultá la información e inscribite.
+Información, inscripciones y resultados en un solo lugar.	Competí con tu equipo y seguí los resultados.
+
+
+Identidad visual
+Elemento	Definición
+Logo	Usar exclusivamente el archivo oficial, sin modificar proporciones, tipografía ni colores.
+Versiones	Logo azul sobre fondos claros; logo blanco sobre fondos oscuros o videos.
+Azul del logo	#0053B4
+Fondo oscuro	#0F172A
+Blanco	#FFFFFF
+Celeste de apoyo	#0EA5E9
+Acentos	Ámbar #F59E0B o verde neón #A8FF00, usados con moderación.
+Tipografía	Inter, presente en la app. Títulos fuertes y textos legibles.
+Imágenes	Atletas, equipos, boxes y competencias reales; esfuerzo, compañerismo y participación.
+
+
+La paleta combina el logo con colores de la interfaz; funciona como guía propuesta para contenidos.
+Aplicación en reels
+Formato vertical, gancho inmediato, escenas reconocibles y subtítulos claros. Mostrar capturas reales cuando se expliquen funcionalidades. Cerrar con logo oficial, un único CTA y competezone.fit.
+En pantalla se escribe CompeteZone. En narración se pronuncia “Compit Zone”.
+Presentación breve de marca:
+“CompeteZone es el punto de encuentro entre atletas y organizaciones: descubrí competencias, gestioná inscripciones y compartí resultados en un solo lugar.”
